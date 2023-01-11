@@ -5,7 +5,7 @@ Copyright (c) 2015-2017 Nicholas H.Tollervey and others (see the AUTHORS file).
 
 Mode is dedicated to cooperate with EduSense devices. In addition, it deliver
 very convinient solution to use by many users. Each of them can keep his own set of
-lessons, andd new one from EduSense resurces, or from private collection.
+lessons, add new one from EduSense resurces, or from private collection.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -53,7 +53,8 @@ logger = logging.getLogger(__name__)
 def path_for_edusense_add(path_to_add=""):
     """
     Adding specific path to sys.path. In this way will be simpler to include
-    modules from EduSense
+    modules from EduSense. It's needed because user work will be not in fixed
+    place, but in different folders. So, relative import will not work
     """
     if path_to_add == "":
         if get_default_workspace() not in sys.path:
@@ -87,18 +88,20 @@ def recursive_overwrite(src, dest, ignore=None):
             src.replace(dest)
 
 
-def path_clean(path, lowercase=False, real=True):
-    path = os.path.normpath(path)
+def path_clean(path_to_clean="", lowercase=False, real=True):
+    if path_to_clean == "":
+        return ""
+    clean_path = os.path.normpath(path_to_clean)
     if lowercase:
-        path = os.path.normcase(path)
-    path = os.path.expanduser(path)
+        clean_path = os.path.normcase(clean_path)
+    clean_path = os.path.expanduser(clean_path)
     if real:
-        path = os.path.realpath(path)
-    return path
+        clean_path = os.path.realpath(clean_path)
+    return clean_path
 
 
-def xml_get_with_lang(child, name, lang, default="en"):
-    result = []
+def xml_get_with_lang(child, name, lang=None, default="en", separator=""):
+    result = None
     lang_best_fit = None
 
     # first, find best suite language
@@ -120,15 +123,21 @@ def xml_get_with_lang(child, name, lang, default="en"):
         if element.tag == name:
             which_lang = element.get("lang")
             if which_lang == lang_best_fit:
-                result.append(element.text)
+                if result is None:
+                    result = element.text
+                else:
+                    result = "{}{}{}".format(result, separator, element.text)
     return result
 
 
-def remove_empty_folders(path_abs):
+def remove_empty_folders(path_abs, files_to_ignore=[]):
+    """removing all empty folders (tree).
+    Files_to_ignore: here can be added files which will not interrupt
+    deleting folder (still folder will be treated as empty)"""
     walk = list(os.walk(path_abs))
-    for path, _, _ in walk[::-1]:
-        if len(os.listdir(path)) == 0:
-            os.rmdir(path)
+    for path, folders, files in walk[::-1]:
+        if set(os.listdir(path)).issubset(set(files_to_ignore)):
+            shutil.rmtree(path, ignore_errors=True)
 
 
 class Dialog_GetText:
@@ -155,7 +164,7 @@ class Dialog_GetText:
         if self.validator != "":
             self.edit_bar.setValidator(
                 QRegExpValidator(QRegExp(self.validator))
-            )  # np: r"[0-9A-Za-z_+=-]{20}")))
+            )  # i.e.: r"[0-9A-Za-z_+=-]{20}")))
         self.edit_bar.returnPressed.connect(self.win.accept)
 
         self.box = QtWidgets.QDialogButtonBox(
@@ -182,9 +191,11 @@ class EduSense_Settings:
     # file with stored path for EduSense stuff (to solve problem PYTHONPATH)
     SEARCH_PATH_FILENAME = "edusense_path.pth"
     # where on internet are placed updates for EduSense?
-    URL_FOR_UPDATE_FILE = "http://www.tinyapi.eu/edusense2/"
+    # URL_FOR_UPDATE_FILE = "http://www.tinyapi.eu/edusense/"
+    URL_FOR_UPDATE_FILE = "http://www.tinyapi.eu/edusense_demo/"
     ZIP_FILENAME = "edusense_update.zip"
     CONFIG_FILENAME = "edusense_config.xml"
+    EXAMPLE_DESC_FILENAME = "description.xml"
 
     SUBPATH_MU_CODE = get_default_workspace()
     SUBPATH_MAIN = os.path.normpath("edusense_env")
@@ -198,17 +209,17 @@ class EduSense_Settings:
     SUBPATH_LIBRARIES = os.path.normpath("edu_lib")
     SUBPATH_MU_MODULE = os.path.normpath("mu_modules")
     SUBPATH_FIRMWARE = os.path.normpath("firmware")
-
-    panel_to_update = []
-
-    settings_from_file = {
-        "class_name": "my_school"
-    }
-    subpath_class = os.path.normpath(settings_from_file["class_name"])
-    user_name = ""
-    language = "pl"
+    DEVICES_MODULE_NAME = "devices"
 
     def __init__(self):
+        self.object_to_update = []
+        self.settings_from_file = {"class_name": "my_school"}
+        self.subpath_class = os.path.normpath(
+            self.settings_from_file["class_name"]
+        )
+        self.user_name = ""
+        self.language = "pl"
+
         settings.settings.init()
         settings.settings.register_for_autosave()
         self.load_settings()
@@ -235,13 +246,14 @@ class EduSense_Settings:
     def get_setting(self, name=""):
         if name != "" and name in self.settings_from_file:
             return self.settings_from_file.get(name)
-        return ""
+        else:
+            return None
 
     def register_panels_to_update(self, ptr):
-        self.panel_to_update.append(ptr)
+        self.object_to_update.append(ptr)
 
     def update_all_panels_now(self):
-        for element in self.panel_to_update:
+        for element in self.object_to_update:
             try:
                 element.update()
             except Exception as err:
@@ -249,7 +261,7 @@ class EduSense_Settings:
                 label_text += ':\n{}: "{}"'.format(
                     type(err).__name__, str(err)
                 )
-                print(label_text)
+                logger.error(label_text)
 
     def valid_path(self, path_input, allow_main):
         path_limit = self.__path_create("main")
@@ -260,8 +272,10 @@ class EduSense_Settings:
             result = (os.path.split(path_to_check)[0]).startswith(path_limit)
         if not result:
             logger.error(
-                "Unauthorized attempt to operate outside "
-                "EduSense folder tree! Hacking?"
+                _(
+                    "Unauthorized attempt to operate outside "
+                    "EduSense folder tree! Hacking?"
+                )
             )
         return result
 
@@ -289,23 +303,110 @@ class EduSense_Settings:
             params.append(s)
 
         path_struct = {
-            "main" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, *params),
-            "workspace" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_WORKSPACE, *params),
-            "year" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_WORKSPACE, self.subpath_class, *params),
-            "student" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_WORKSPACE, self.subpath_class, self.user_name, *params),
-            "student file" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_WORKSPACE, self.subpath_class, self.user_name, *params, "append py file"),
-            "student private" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_WORKSPACE, self.subpath_class, self.user_name, self.SUBPATH_PRIVATE_EXAMPLES, *params),
-            "examples" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_EXAMPLES, *params),
-            "custom" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_CUSTOM_EXAMPLES, *params),
-            "zip install" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, *params),
-            "zip default install file" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.ZIP_FILENAME),
-            "zip_archive" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_ARCHIVE, *params),
-            "zip archive file" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_ARCHIVE, self.ZIP_FILENAME),
-            "config file" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.CONFIG_FILENAME),
-            "temp" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_TEMP, *params),
-            "libraries" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_LIBRARIES, *params),
-            "firmware" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_FIRMWARE, *params),
-            "mu_modules" : (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, self.SUBPATH_MU_MODULE, *params),
+            "main": (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, *params),
+            "workspace": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_WORKSPACE,
+                *params,
+            ),
+            "class": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_WORKSPACE,
+                self.subpath_class,
+                *params,
+            ),
+            "student": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_WORKSPACE,
+                self.subpath_class,
+                self.user_name,
+                *params,
+            ),
+            "student file": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_WORKSPACE,
+                self.subpath_class,
+                self.user_name,
+                *params,
+                "append py file",
+            ),
+            "student private": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_WORKSPACE,
+                self.subpath_class,
+                self.user_name,
+                self.SUBPATH_PRIVATE_EXAMPLES,
+                *params,
+            ),
+            "student private file": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_WORKSPACE,
+                self.subpath_class,
+                self.user_name,
+                self.SUBPATH_PRIVATE_EXAMPLES,
+                *params,
+                "append py file",
+            ),
+            "examples": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_EXAMPLES,
+                *params,
+            ),
+            "custom examples": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_CUSTOM_EXAMPLES,
+                *params,
+            ),
+            "zip install": (self.SUBPATH_MU_CODE, self.SUBPATH_MAIN, *params),
+            "zip install default file": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.ZIP_FILENAME,
+            ),
+            "zip_archive": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_ARCHIVE,
+                *params,
+            ),
+            "zip archive file": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_ARCHIVE,
+                self.ZIP_FILENAME,
+            ),
+            "temp": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_TEMP,
+                *params,
+            ),
+            "libraries": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_LIBRARIES,
+                *params,
+            ),
+            "firmware": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_FIRMWARE,
+                *params,
+            ),
+            "mu_modules": (
+                self.SUBPATH_MU_CODE,
+                self.SUBPATH_MAIN,
+                self.SUBPATH_MU_MODULE,
+                *params,
+            ),
         }
 
         path = ""
@@ -324,7 +425,7 @@ class EduSense_Settings:
 
     def show_comparision_of_zip_files(self, source=""):
         if source == "":
-            source_path = self.path_get("zip default install file")
+            source_path = self.path_get("zip install default file")
         else:
             source_path = path_clean(source)
 
@@ -343,7 +444,7 @@ class EduSense_Settings:
                         present_version["date"],
                         new_version["release"],
                         new_version["date"],
-                        "\n".join(new_version["description"]),
+                        new_version["description"],
                     )
                 )
                 question = QtWidgets.QMessageBox.question(
@@ -374,17 +475,17 @@ class EduSense_Settings:
         # saved in subfolder.
         # In this way we will not overwrite present, current data
         # In release mode it should be ""
-        destination = "dummy"
+        destination = ""
         destinantion_path = self.path_get("main", destination)
         if source == "":
-            zip_path = self.path_get("zip default install file")
+            zip_file_path = self.path_get("zip install default file")
         else:
-            zip_path = path_clean(source)
+            zip_file_path = path_clean(source)
 
         temp_path = self.path_get("temp")
         shutil.rmtree(temp_path, ignore_errors=True)
 
-        if not self.zip_check_content(zip_path):
+        if not self.zip_check_content(zip_file_path):
             QtWidgets.QMessageBox.warning(
                 None,
                 _("Info"),
@@ -396,8 +497,9 @@ class EduSense_Settings:
         if not os.path.exists(destinantion_path):
             os.makedirs(destinantion_path)
 
+        list_of_errors = ""
         try:
-            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
                 zip_ref.extractall(temp_path)
                 with zip_ref.open(self.CONFIG_FILENAME, "r") as config:
                     tree = ET.parse(config)
@@ -418,6 +520,13 @@ class EduSense_Settings:
                                         else:
                                             if os.path.isfile(path_to_remove):
                                                 os.remove(path_to_remove)
+                                    else:
+                                        list_of_errors += (
+                                            "- removing: {}\n".format(
+                                                element.text
+                                            )
+                                        )
+                            # it has to be done as two loops
                             for element in child:
                                 if element.tag == "copy":
                                     src = self.path_get("temp", element.text)
@@ -425,30 +534,38 @@ class EduSense_Settings:
                                         "main", destination, element.text
                                     )
                                     if not os.path.exists(src):
-                                        print(
-                                            "Can't find in zip: ", element.text
+                                        list_of_errors += (
+                                            "- copying: {}\n".format(
+                                                element.text
+                                            )
                                         )
                                         continue
                                     recursive_overwrite(src, dest)
-            if not os.path.isfile(
-                self.path_get("zip archive file")
-            ) or not os.path.samefile(
-                zip_path, self.path_get("zip archive file")
-            ):
-                shutil.copy2(zip_path, self.path_get("zip archive file"))
+            if list_of_errors != "":
+                list_of_errors = (
+                    _("List of installation errors:\n") + list_of_errors
+                )
+                QtWidgets.QMessageBox.warning(
+                    None, _("Error"), list_of_errors, QtWidgets.QMessageBox.Ok
+                )
+            else:
+                archive_file_path = self.path_get("zip archive file")
+                if not os.path.exists(
+                    archive_file_path
+                ) or not os.path.samefile(zip_file_path, archive_file_path):
+                    shutil.copy2(zip_file_path, archive_file_path)
             return True
         except Exception as err:
             label_text = _("Cannot install from this zip file")
             label_text += ':\n{}: "{}"'.format(type(err).__name__, str(err))
-            print(label_text)
             logger.warning(label_text)
             QtWidgets.QMessageBox.warning(
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )
             return False
         finally:
-            if zip_path == self.path_get("zip default install file"):
-                os.remove(zip_path)
+            if zip_file_path == self.path_get("zip install default file"):
+                os.remove(zip_file_path)
             shutil.rmtree(temp_path, ignore_errors=True)
 
     def zip_get_version(self, source):
@@ -461,7 +578,7 @@ class EduSense_Settings:
         return self.xml_get_version("")
 
     def xml_get_version(self, source):
-        result = {"release": "----", "date": "----", "description": []}
+        result = {"release": "----", "date": "----", "description": "----"}
         if source == "":
             return False, result
 
@@ -474,20 +591,20 @@ class EduSense_Settings:
             if child.tag == "release_date":
                 result["date"] = child.text
 
-        result["description"].append(
-            "\n".join(xml_get_with_lang(root, "description", self.language))
+        result["description"] = xml_get_with_lang(
+            root, "description", self.language, separator="\n"
         )
         return True, result
 
     def zip_check_content(self, input_path=""):
         """
         Here is checked, if it is file, zip file, zip with proper content
-        In future, maybe will be added procedures to validate all files inside
+        In future, will be added procedures to validate all files inside
         """
         if input_path != "":
             src = path_clean(input_path)
         else:
-            src = self.path_get("zip default install file")
+            src = self.path_get("zip install default file")
 
         if not os.path.isfile(src):
             return False
@@ -499,7 +616,7 @@ class EduSense_Settings:
             else:
                 return False
         else:
-            logger.warning("This does not seems to be a valid zip file.")
+            logger.warning(_("This does not seems to be a valid zip file."))
             return False
 
 
@@ -535,7 +652,6 @@ class EduSense(PyGameZeroMode):
 
     def __init__(self, editor, view):
         super().__init__(editor, view)
-
 
     def actions(self):
         """
@@ -575,16 +691,18 @@ class EduSense(PyGameZeroMode):
     def workspace_dir(self):
         self.initial_preparation()
         edu_settings.register_panels_to_update(self)
+        # any move out Edusense mode, should logout user
         edu_settings.user_name = ""
 
-        self.tabs_clean()
+        self.tabs_remove()
         self.workspace_update()
 
+        # check, if in default place is present update.
         if edu_settings.zip_check_content():
             if edu_settings.show_comparision_of_zip_files():
                 edu_settings.update_data_from_zip()
             else:
-                os.remove(edu_settings.path_get("zip default install file"))
+                os.remove(edu_settings.path_get("zip install default file"))
 
         if self.view.current_tab and self.view.current_tab.path:
             path = path_clean(self.view.current_tab.path)
@@ -668,7 +786,6 @@ class EduSense(PyGameZeroMode):
         self.register_path_for_edu_env()
 
         edu_settings.language = self.editor.user_locale
-        print("nowy sposób obsługi przykładów2")
 
         # let's check if required folders are exists. If not, create it.
         for element in (
@@ -676,7 +793,7 @@ class EduSense(PyGameZeroMode):
             "workspace",
             "libraries",
             "examples",
-            "custom",
+            "custom examples",
             "firmware",
             "zip_archive",
             "mu_modules",
@@ -688,6 +805,9 @@ class EduSense(PyGameZeroMode):
         # temp. We want to add some modules into venv.
         # for now, it will be done in this way
         # (until I will not find better way)
+        # later, this could be expand to possibility to install modules,
+        # base on info in user project (description.xml)
+        # In other word, module will be installed, when it really will be needed.
         _, user_packages = venv.installed_packages()
         old_packages = [p.lower() for p in user_packages]
         new_packages = ["pyserial"]
@@ -696,8 +816,9 @@ class EduSense(PyGameZeroMode):
 
     def register_path_for_edu_env(self):
         """
-        Register path for EduSense environment in venv used by users
+        Register path for EduSense environment in venv used by users.
         """
+        # I'm not sure is that best way to do it. For now, is OK
         edu_main_path = edu_settings.path_get("main")
         file_path = os.path.join(venv.path, edu_settings.SEARCH_PATH_FILENAME)
 
@@ -708,21 +829,24 @@ class EduSense(PyGameZeroMode):
     def update(self):
         """
         Update all info on screen, tabs, files, etc.
-        :return:
         """
         self.workspace_update()
-        self.tabs_clean()
+        self.tabs_remove()
 
     def user_dialog(self, event):
+        """
+        Open dialog with student about lessons, that he want to use.
+        """
         self.dialog_user = QtWidgets.QDialog()
         self.ui_user = Ui_Dialog_Users()
-        # self.ui_user = mu.contrib.ui_users.Ui_dialog()
         self.ui_user.setupUi(self.dialog_user)
 
         edu_settings.subpath_class = edu_settings.get_setting("class_name")
 
         self.ui_user.user_edit.setText(edu_settings.user_name)
         self.ui_user.example_button.setEnabled(False)
+        # to rid problems with special chars (i.e. when it will become
+        # folder name), set of possible to use chars are limited.
         self.ui_user.user_edit.setValidator(
             QRegExpValidator(QRegExp(r"[0-9A-Za-z_+=-]{20}"))
         )
@@ -736,9 +860,7 @@ class EduSense(PyGameZeroMode):
         self.ui_user.example_button.clicked.connect(self.add_example_clicked)
         self.ui_user.user_button.clicked.connect(self.user_change_clicked)
         self.ui_user.user_edit.returnPressed.connect(self.user_change_clicked)
-        self.ui_user.lessons_list.clicked.connect(
-            self.lesson_buttons_enable_clicked
-        )
+        self.ui_user.lessons_list.clicked.connect(self.lessons_list_clicked)
         self.ui_user.lessons_list.doubleClicked.connect(
             self.lesson_use_clicked
         )
@@ -759,12 +881,8 @@ class EduSense(PyGameZeroMode):
     def add_example_clicked(self):
         # check if added folder exist
         if self.ui_user.examples_tree.currentItem() is not None:
-            subdir_to_example = (
-                self.ui_user.examples_tree.currentItem().directory
-            )
-            if subdir_to_example == "" or not os.path.isdir(
-                edu_settings.path_get("main", subdir_to_example)
-            ):
+            dir_to_example = self.ui_user.examples_tree.currentItem().directory
+            if dir_to_example == "" or not os.path.isdir(dir_to_example):
                 QtWidgets.QMessageBox.warning(
                     None,
                     _("Error!"),
@@ -772,9 +890,11 @@ class EduSense(PyGameZeroMode):
                     QtWidgets.QMessageBox.Ok,
                 )
                 return
-            if os.path.exists(
-                edu_settings.path_get("student", subdir_to_example)
-            ):
+            path_at_student = os.path.relpath(
+                dir_to_example, edu_settings.path_get("main")
+            )
+            path_at_student = edu_settings.path_get("student", path_at_student)
+            if os.path.exists(path_at_student):
                 question = QtWidgets.QMessageBox.question(
                     None,
                     _("Question"),
@@ -782,17 +902,12 @@ class EduSense(PyGameZeroMode):
                     QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
                 )
                 if question == QtWidgets.QMessageBox.Yes:
-                    shutil.rmtree(
-                        edu_settings.path_get("student", subdir_to_example)
-                    )
+                    shutil.rmtree(path_at_student)
                 else:
                     return
-            shutil.copytree(
-                edu_settings.path_get("main", subdir_to_example),
-                edu_settings.path_get("student", subdir_to_example),
-            )
+            shutil.copytree(dir_to_example, path_at_student)
 
-            # reload all files that are already open
+            # reload all files that are already open (for current student)
             subpath_to_student = edu_settings.path_get("student")
             list_of_lessons_paths = []
             current_tab_path = self.view.current_tab.path
@@ -817,32 +932,112 @@ class EduSense(PyGameZeroMode):
                 self.view.focus_tab(current_tab)
             self.workspace_update()
 
-    def lessons_list_element(self, directory, list_item):
-        # list of lessons added by user
+    def example_check_correctness(self, dir):
+        locked = False
+        start_file = None
+        if os.path.isdir(dir):
+            desc_file = os.path.join(dir, edu_settings.EXAMPLE_DESC_FILENAME)
+            if os.path.exists(desc_file):
+                with open(desc_file, "r") as desc_xml:
+                    try:
+                        tree = ET.parse(desc_xml)
+                        root = tree.getroot()
+                        start_file = xml_get_with_lang(
+                            root, "start_file", edu_settings.language
+                        )
+                        locked_result = xml_get_with_lang(root, "locked")
+                        if locked_result == "True":
+                            locked = True
+                    except Exception:
+                        locked = True
+
+            if start_file is None:
+                start_file = os.path.split(dir)[1] + ".py"
+
+            # only file in root of project is allowed
+            start_file = os.path.split(start_file)[1]
+            full_dir = os.path.join(dir, start_file)
+
+            if locked or not os.path.exists(full_dir):
+                return False, full_dir
+            else:
+                return True, full_dir
+
+    def lessons_list_them(self, directory, list_item):
+        """fill list with lessons added by user"""
         full_dir = edu_settings.path_get("student", directory)
-        if os.path.exists(full_dir):
+        if os.path.isdir(full_dir):
             for element in os.listdir(full_dir):
                 if os.path.isdir(os.path.join(full_dir, element)):
                     if element == edu_settings.SUBPATH_TRASH:
                         continue
-                    if os.path.exists(
-                        os.path.join(full_dir, element, element + ".py")
-                    ):
-                        item = QtWidgets.QListWidgetItem(list_item)
-                        item.directory = os.path.join(directory, element)
-                        item.setText(
-                            "{}\n  {}".format(element, item.directory)
+                    tooltip = None
+                    desc_file = os.path.join(
+                        full_dir, element, edu_settings.EXAMPLE_DESC_FILENAME
+                    )
+                    if os.path.exists(desc_file):
+                        with open(desc_file, "r") as desc_xml:
+                            try:
+                                tree = ET.parse(desc_xml)
+                                root = tree.getroot()
+                                title = xml_get_with_lang(
+                                    root,
+                                    "title",
+                                    edu_settings.language,
+                                    separator=" ",
+                                )
+                                if title is None:
+                                    title = element
+                                desc = xml_get_with_lang(
+                                    root,
+                                    "description",
+                                    edu_settings.language,
+                                    separator=" ",
+                                )
+                                if desc is None:
+                                    desc = ".{}{}".format(
+                                        os.path.sep,
+                                        os.path.relpath(directory, element),
+                                    )
+                                tooltip = xml_get_with_lang(
+                                    root,
+                                    "tooltip",
+                                    edu_settings.language,
+                                    separator="\n",
+                                )
+                                whole_name = "{}\n  {}".format(title, desc)
+                            except Exception:
+                                whole_name = "!!!> {}\n  .{}{}".format(
+                                    element,
+                                    os.path.sep,
+                                    os.path.join(directory, element),
+                                )
+                    else:
+                        whole_name = "{}\n  .{}{}".format(
+                            element,
+                            os.path.sep,
+                            os.path.join(directory, element),
                         )
+
+                    result, *_ = self.example_check_correctness(
+                        os.path.join(full_dir, element)
+                    )
+                    if result:
+                        item = QtWidgets.QListWidgetItem(list_item)
+                        item.directory = os.path.join(full_dir, element)
+                        item.setText(whole_name)
                         item.setIcon(load_icon("package"))
-                    self.lessons_list_element(
+                        if tooltip is not None:
+                            item.setToolTip(tooltip)
+                    self.lessons_list_them(
                         os.path.join(directory, element), list_item
                     )
 
     def lesson_remove_clicked(self):
+        """remove chosen lesson"""
         list_item = self.ui_user.lessons_list.currentItem()
         if list_item is not None:
-            lesson_dir = edu_settings.path_get("student", list_item.directory)
-            if os.path.isdir(lesson_dir):
+            if os.path.isdir(list_item.directory):
                 question = QtWidgets.QMessageBox.question(
                     None,
                     _("Question"),
@@ -850,6 +1045,10 @@ class EduSense(PyGameZeroMode):
                     QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
                 )
                 if question == QtWidgets.QMessageBox.Yes:
+                    result, project_file = self.example_check_correctness(
+                        list_item.directory
+                    )
+
                     # make trash bin if not yet exist
                     trash_path = edu_settings.path_get(
                         "student",
@@ -858,18 +1057,68 @@ class EduSense(PyGameZeroMode):
                     )
                     if not os.path.isdir(trash_path):
                         os.makedirs(trash_path)
-                    shutil.move(lesson_dir, trash_path)
-                    remove_empty_folders(edu_settings.path_get("student"))
-                    self.tabs_clean(
-                        edu_settings.path_get(
-                            "student file", list_item.directory
-                        )
+                    shutil.move(list_item.directory, trash_path)
+                    remove_empty_folders(
+                        edu_settings.path_get("student"),
+                        [edu_settings.EXAMPLE_DESC_FILENAME],
                     )
+                    self.tabs_remove(project_file)
                     self.workspace_update()
-                else:
-                    return
 
-    def lesson_buttons_enable_clicked(self):
+    def lesson_custom_add(self):
+        result, entered_name = Dialog_GetText(
+            "input file name", r"[0-9A-Za-z_+=-]{20}"
+        ).get()
+        if result and entered_name != "":
+            dir_name = os.path.splitext(entered_name)[0]
+            file_name = dir_name + ".py"
+            path_to_file = edu_settings.path_get(
+                "student private", dir_name, file_name
+            )
+
+            if os.path.exists(path_to_file):
+                question = QtWidgets.QMessageBox.question(
+                    None,
+                    _("Question"),
+                    _("This lesson already exist. Overwrite it?"),
+                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                )
+                if question == QtWidgets.QMessageBox.Yes:
+                    shutil.rmtree(
+                        edu_settings.path_get("student private", dir_name)
+                    )
+                else:
+                    return False, ""
+
+            try:
+                # attempt to make following private lesson
+                os.makedirs(edu_settings.path_get("student private", dir_name))
+                with open(path_to_file, "w"):
+                    pass
+
+                # if this lesson is already open, reload it
+                for tab in self.view.widgets:
+                    if tab.path == path_to_file:
+                        tab_id = self.view.tabs.indexOf(tab)
+                        self.view.tabs.removeTab(tab_id)
+                        self.editor.direct_load(path_to_file)
+                        break
+                return True, path_to_file
+
+            except Exception as err:
+                label_text = _("Error during creating file")
+                label_text += ':\n{}: "{}"'.format(
+                    type(err).__name__, str(err)
+                )
+                QtWidgets.QMessageBox.warning(
+                    None,
+                    _("Info"),
+                    label_text,
+                    QtWidgets.QMessageBox.Ok,
+                )
+                return False, ""
+
+    def lessons_list_clicked(self):
         if hasattr(self, "dialog_user"):
             if self.ui_user.lessons_list.currentRow() >= 0:
                 # in this way is recognized item dedicated to add private files
@@ -877,64 +1126,7 @@ class EduSense(PyGameZeroMode):
                     self.ui_user.lessons_list.currentItem().directory
                     == edu_settings.SUBPATH_PRIVATE_EXAMPLES
                 ):
-                    result, entered_name = Dialog_GetText(
-                        "input file name", r"[0-9A-Za-z_+=-]{20}"
-                    ).get()
-                    if result and entered_name != "":
-                        dir_name = os.path.splitext(entered_name)[0]
-                        file_name = dir_name + ".py"
-                        path_to_file = edu_settings.path_get(
-                            "student private", dir_name, file_name
-                        )
-
-                        if os.path.exists(path_to_file):
-                            question = QtWidgets.QMessageBox.question(
-                                None,
-                                _("Question"),
-                                _("This lesson already exist. Overwrite it?"),
-                                QtWidgets.QMessageBox.Yes
-                                | QtWidgets.QMessageBox.No,
-                            )
-                            if question == QtWidgets.QMessageBox.Yes:
-                                shutil.rmtree(
-                                    edu_settings.path_get(
-                                        "student private", dir_name
-                                    )
-                                )
-                            else:
-                                return
-
-                        try:
-                            # attempt to make following private lesson
-                            os.makedirs(
-                                edu_settings.path_get(
-                                    "student private", dir_name
-                                )
-                            )
-                            with open(path_to_file, "w"):
-                                pass
-
-                            # if this lesson is already open, reload it
-                            for tab in self.view.widgets:
-                                if tab.path == path_to_file:
-                                    tab_id = self.view.tabs.indexOf(tab)
-                                    self.view.tabs.removeTab(tab_id)
-                                    self.editor.direct_load(path_to_file)
-                                    break
-
-                        except Exception as err:
-                            label_text = _("Error during creating file")
-                            label_text += ':\n{}: "{}"'.format(
-                                type(err).__name__, str(err)
-                            )
-                            print(label_text)
-                            QtWidgets.QMessageBox.warning(
-                                None,
-                                _("Info"),
-                                label_text,
-                                QtWidgets.QMessageBox.Ok,
-                            )
-
+                    self.lesson_custom_add()
                     self.workspace_update()
                 else:
                     self.ui_user.lesson_use_button.setEnabled(True)
@@ -944,32 +1136,42 @@ class EduSense(PyGameZeroMode):
                 self.ui_user.lesson_remove_button.setEnabled(False)
 
     def lesson_use_clicked(self):
+        """clicked button USE lesson
+        or double clicked on lesson"""
         current_lesson_item = self.ui_user.lessons_list.currentItem()
         if (
             current_lesson_item is not None
             and current_lesson_item.directory != ""
         ):
-            current_lesson_path = edu_settings.path_get(
-                "student file", current_lesson_item.directory
+            result, project_file = self.example_check_correctness(
+                current_lesson_item.directory
             )
-            if os.path.exists(current_lesson_path):
-                for tab in self.view.widgets:
-                    if (
-                        tab.path is not None
-                        and tab.path == current_lesson_path
-                    ):
-                        self.view.focus_tab(tab)
-                        self.dialog_user.close()
-                        break
-                else:
-                    self.editor.direct_load(current_lesson_path)
-                    self.dialog_user.close()
-            else:
+            if not result:
+                QtWidgets.QMessageBox.warning(
+                    None,
+                    _("Info"),
+                    _("Error during opening project"),
+                    QtWidgets.QMessageBox.Ok,
+                )
                 self.workspace_update()
-                self.tabs_clean()
+                self.tabs_remove()
+                return
+            for tab in self.view.widgets:
+                if (
+                    tab.path is not None
+                    and tab.path == current_lesson_item.directory
+                ):
+                    self.view.focus_tab(tab)
+                    self.dialog_user.close()
+                    break
+            else:  # if lesson isn't already open, then ...
+                self.editor.direct_load(project_file)
+                self.dialog_user.close()
 
-    def tabs_clean(self, path=""):
-        if path == "":
+    def tabs_remove(self, path_to_clean=""):
+        """remove one tab or all tabs open by current user"""
+        repaired_parh = path_clean(path_to_clean)
+        if repaired_parh == "":
             # close all tabs with our students lessons
             subpath_to_workspace = edu_settings.path_get("workspace")
             for tab in self.view.widgets:
@@ -983,13 +1185,13 @@ class EduSense(PyGameZeroMode):
         else:
             # close one tab
             for tab in self.view.widgets:
-                if tab.path is not None and tab.path == path_clean(path):
+                if tab.path is not None and tab.path == repaired_parh:
                     tab_id = self.view.tabs.indexOf(tab)
                     self.view.tabs.removeTab(tab_id)
                     break
 
     def workspace_update(self):
-        # refresh main window with all data correspond to EduSense
+        """refresh main window with all data correspond to EduSense"""
         play_slot = self.view.button_bar.slots["user"]
         play_slot.setText(edu_settings.user_name)
 
@@ -998,102 +1200,132 @@ class EduSense(PyGameZeroMode):
         else:
             play_slot.setIcon(load_icon("user_missing"))
 
+        # if exist, refresh also data in user panel
         if hasattr(self, "dialog_user"):
             self.ui_user.user_edit.setText(edu_settings.user_name)
             if edu_settings.user_name != "":
                 self.ui_user.lessons_label.setText(
-                    "These are your lessons, " + edu_settings.user_name
+                    _("These are your lessons, ") + edu_settings.user_name
                 )
             else:
                 self.ui_user.lessons_label.setText("...")
 
             self.lessons_fill_form()
             self.examples_fill_form()
-            self.lesson_buttons_enable_clicked()
+            self.lessons_list_clicked()  # to update buttons status
 
     def user_change_clicked(self):
         if hasattr(self, "dialog_user"):
             if edu_settings.user_name != self.ui_user.user_edit.text():
                 edu_settings.user_name = self.ui_user.user_edit.text()
                 self.workspace_update()
-                self.tabs_clean()
+                self.tabs_remove()
 
-    def example_xml_node(self, node_to_do, tree_item):
-        for element in node_to_do:
-            if element.tag == "example":
-                item = QtWidgets.QTreeWidgetItem(tree_item)
-                description = " ".join(
-                    xml_get_with_lang(element, "description", edu_settings.language)
+    def _examples_nodes_add(self, base, folder, parent_item):
+        """Add examples base on structure of folders with examples
+        Additional info could be taken from files description.xml
+        (one at each folder)"""
+        for element in os.listdir(os.path.join(base, folder)):
+            full_dir = os.path.join(base, folder, element)
+            locked = False
+            if os.path.isdir(full_dir):
+                item = QtWidgets.QTreeWidgetItem(parent_item)
+                # first, we check if in this folder is present desc file
+                desc_file = os.path.join(
+                    full_dir, edu_settings.EXAMPLE_DESC_FILENAME
                 )
-                title = " ".join(xml_get_with_lang(element, "title", edu_settings.language))
-                name = title + "\n   " + description
-                item.setText(0, name)
-                child_with_path = element.find("path")
-                if child_with_path is not None and child_with_path.text != "":
-                    item.directory = os.path.join(
-                        edu_settings.SUBPATH_EXAMPLES,
-                        os.path.normpath(child_with_path.text),
-                    )
-                    item.setIcon(0, load_icon("package"))
+                if os.path.exists(desc_file):
+                    with open(desc_file, "r") as desc_xml:
+                        try:
+                            tree = ET.parse(desc_xml)
+                            root = tree.getroot()
+                            title = xml_get_with_lang(
+                                root,
+                                "title",
+                                edu_settings.language,
+                                separator=" ",
+                            )
+                            if title is None:
+                                title = element
+                            desc = xml_get_with_lang(
+                                root,
+                                "description",
+                                edu_settings.language,
+                                separator=" ",
+                            )
+                            if desc is None:
+                                desc = ".{}{}".format(
+                                    os.path.sep,
+                                    os.path.relpath(full_dir, base),
+                                )
+                            tooltip = xml_get_with_lang(
+                                root,
+                                "tooltip",
+                                edu_settings.language,
+                                separator="\n",
+                            )
+                            if tooltip is not None:
+                                item.setToolTip(0, tooltip)
+                            locked_result = xml_get_with_lang(root, "locked")
+                            if locked_result == "True":
+                                locked = True
+                            item.setText(0, "{}\n  {}".format(title, desc))
+                        except Exception:
+                            item.setText(
+                                0,
+                                "!!!> {}\n  .{}{}".format(
+                                    element,
+                                    os.path.sep,
+                                    os.path.relpath(full_dir, base),
+                                ),
+                            )
+                            locked = True
                 else:
+                    item.setText(
+                        0,
+                        "{}\n  .{}{}".format(
+                            element,
+                            os.path.sep,
+                            os.path.relpath(full_dir, base),
+                        ),
+                    )
+                    locked = not os.path.exists(
+                        os.path.join(full_dir, element + ".py")
+                    )
+
+                if locked:
                     item.directory = ""
                     item.setIcon(0, load_icon("folder"))
-                self.example_xml_node(element, item)
-
-    def custom_example_node(self, folder, tree_item):
-        # custom lessons organized in folders tree
-        full_dir = edu_settings.path_get("custom", folder)
-        for element in os.listdir(full_dir):
-            if os.path.isdir(os.path.join(full_dir, element)):
-                item = QtWidgets.QTreeWidgetItem(tree_item)
-                item.setText(
-                    0, element + "\n  " + os.path.join(folder, element)
-                )
-                if os.path.exists(
-                    os.path.join(full_dir, element, element + ".py")
-                ):
-                    item.directory = os.path.join(
-                        edu_settings.SUBPATH_CUSTOM_EXAMPLES, folder, element
-                    )
-                    item.setIcon(0, load_icon("package"))
                 else:
-                    item.directory = ""
-                    item.setIcon(0, load_icon("folder"))
-                self.custom_example_node(os.path.join(folder, element), item)
+                    item.directory = full_dir
+                    item.setIcon(0, load_icon("package"))
+                self._examples_nodes_add(
+                    base, os.path.join(folder, element), item
+                )
 
     def examples_fill_form(self):
-
+        # first, clear list of all examples, then refill them
         self.ui_user.examples_tree.clear()
+        self.ui_user.examples_tree.clearSelection()
         try:
-            zip_path = edu_settings.path_get("zip archive file")
-            with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                with zip_ref.open(edu_settings.CONFIG_FILENAME, "r") as config:
-                    tree = ET.parse(config)
+            # Edusense examples
+            self._examples_nodes_add(
+                edu_settings.path_get("examples"),
+                "",
+                self.ui_user.examples_tree,
+            )
 
-                    # config_path = edu_settings.path_get("config file")
-                    # if not os.path.isfile(config_path):
-                    #     raise Exception("Config file not exist")
-                    # tree = ET.parse(config_path)
-                    root = tree.getroot()
-
-                    # original examples
-                    for child in root:
-                        if child.tag == "examples":
-                            self.example_xml_node(
-                                child, self.ui_user.examples_tree
-                            )
-                    # custom lessons
-                    item = QtWidgets.QTreeWidgetItem(
-                        self.ui_user.examples_tree
-                    )
-                    item.setText(0, _("Custom examples"))
-                    item.directory = ""
-                    item.setIcon(0, load_icon("folder"))
-                    self.custom_example_node("", item)
+            # custom examples
+            item = QtWidgets.QTreeWidgetItem(self.ui_user.examples_tree)
+            item.setText(0, _("Custom examples"))
+            item.directory = ""
+            item.setIcon(0, load_icon("folder"))
+            self._examples_nodes_add(
+                edu_settings.path_get("custom examples"), "", item
+            )
         except Exception as err:
-            label_text = _("Error during read configuration file.")
+            label_text = _("Error during building examples structure")
             label_text += ':\n{}: "{}"'.format(type(err).__name__, str(err))
-            print(label_text)
             QtWidgets.QMessageBox.warning(
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )
@@ -1102,7 +1334,7 @@ class EduSense(PyGameZeroMode):
         self.ui_user.lessons_list.clear()
         self.ui_user.lessons_list.clearSelection()
         if edu_settings.user_name != "":
-            self.lessons_list_element("", self.ui_user.lessons_list)
+            self.lessons_list_them("", self.ui_user.lessons_list)
             # new private program
             item = QtWidgets.QListWidgetItem(self.ui_user.lessons_list)
             item.directory = edu_settings.SUBPATH_PRIVATE_EXAMPLES
@@ -1111,9 +1343,16 @@ class EduSense(PyGameZeroMode):
 
     #  DEVICES tab (for users)
     def devices_dialog(self):
+        """Open basic form (framework) for Edusense devices.
+        Later on, is called class from external module. In this way,
+        we can easy make updates for this device window, without
+        necessity update Mu Editor"""
         try:
             edu_dev_lib = importlib.import_module(
-                edu_settings.SUBPATH_MU_MODULE + ".devices"
+                "{}.{}".format(
+                    edu_settings.SUBPATH_MU_MODULE,
+                    edu_settings.DEVICES_MODULE_NAME,
+                )
             )
             edu_dev_lib.Device_User_Panel(self, edu_settings.language)
 
@@ -1121,18 +1360,19 @@ class EduSense(PyGameZeroMode):
             label_text = _("Loading Edusense library failed")
             label_text += '\n  {}: "{}"'.format(type(err).__name__, str(err))
             label_text += "\nHave you loaded add-ons from EduSense?"
-            # print(label_text)
             QtWidgets.QMessageBox.warning(
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )
 
 
 class EduSense_Config_Tab(QtWidgets.QWidget):
-    version_on_server = "??"
-    firmware_port = None
-    firmware_device_name = ""
-    firmware_installed_version = ""
-    settings = None
+    """This is tab dedicated to configure Edusense environment"""
+
+    # version_on_server = "??"
+    # firmware_port = None
+    # firmware_device_name = ""
+    # firmware_installed_version = ""
+    # settings = None
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1142,7 +1382,6 @@ class EduSense_Config_Tab(QtWidgets.QWidget):
     def setup(self, settings):
         self.settings = settings
         self.ui_config_tab = Ui_Tab_Settings()
-        # self.ui_config_tab = mu.contrib.ui_tab_setup.Ui_Form()
         self.ui_config_tab.setupUi(self.parent)
         self.parent.setMinimumSize(600, 430)
         self.parent.setWindowTitle(_("Mu Administration"))
@@ -1167,25 +1406,27 @@ class EduSense_Config_Tab(QtWidgets.QWidget):
         self.ui_config_tab.settings_class_adv_button.clicked.connect(
             self.settings_class_adv_click
         )
-
         self.update()
 
     def update(self):
         # update all data on this tab
         if hasattr(self, "ui_config_tab"):
+            # for now, validation is base on checking only zip from archive
+            # Maybe better will be, make large method with checking all folders,
+            # content inside, etc. To determinate later...
             valid, version_info = edu_settings.zip_get_version(
                 edu_settings.path_get("zip archive file")
             )
             if valid:
                 desc = (
-                    "Version of the currently installed software: "
+                    _("Version of the currently installed software:")
                     + version_info["release"]
                 )
                 desc += "\nDate: " + version_info["date"]
             else:
-                desc = (
+                desc = _(
                     "Error. "
-                    + "There is no installed proper software from EduSense"
+                    "There is no installed proper software from EduSense"
                 )
             self.ui_config_tab.update_label.setText(desc)
 
@@ -1193,6 +1434,7 @@ class EduSense_Config_Tab(QtWidgets.QWidget):
             self.ui_config_tab.settings_class_edit.setText(name)
 
     def settings_save_data(self):
+        # save data, clear user, refresh all panels
         if hasattr(self, "ui_config_tab"):
             student_class = self.ui_config_tab.settings_class_edit.text()
             edu_settings.put_setting("class_name", student_class)
@@ -1203,11 +1445,13 @@ class EduSense_Config_Tab(QtWidgets.QWidget):
         self.settings_save_data()
 
     def settings_class_adv_click(self):
+        # This is just for start (now not used). We can put here additional
+        # adv settings like: network path.
         modifiers = QtWidgets.QApplication.keyboardModifiers()
+        # It will work only with CTRL + ALT keys
         if modifiers == QtCore.Qt.ControlModifier | QtCore.Qt.AltModifier:
-            print("Special configuration")
             result, path = Dialog_GetText(
-                "Input path to class configuration",
+                _("Input network path to system configuration file"),
                 r"[0-9A-Za-z_+=-.:/\\]{300}",
             ).get()
             if result:
@@ -1223,26 +1467,28 @@ class EduSense_Config_Tab(QtWidgets.QWidget):
     def service_button_click(self):
         try:
             edu_dev_lib = importlib.import_module(
-                edu_settings.SUBPATH_MU_MODULE + ".devices"
+                "{}.{}".format(
+                    edu_settings.SUBPATH_MU_MODULE,
+                    edu_settings.DEVICES_MODULE_NAME,
+                )
             )
-
-            _ = edu_dev_lib.Device_Service_Panel(
+            edu_dev_lib.Device_Service_Panel(
                 self, edu_settings.language, edu_settings.path_get("firmware")
             )
         except Exception as err:
             label_text = _("Loading Edusense library failed")
             label_text += ':\n{}: "{}"'.format(type(err).__name__, str(err))
             label_text += "\nHave you loaded add-ons from EduSense?"
-            print(label_text)
             QtWidgets.QMessageBox.warning(
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )
 
     def update_server_button_click(self):
+        """Get update from www"""
         url_zip = urllib.parse.urljoin(
             edu_settings.URL_FOR_UPDATE_FILE, edu_settings.ZIP_FILENAME
         )
-        # print("ścieżka: ", url_zip)
+        # prepare temp folder to download there zip file
         temp_path = edu_settings.path_get("main", "temp_internet")
         shutil.rmtree(temp_path, ignore_errors=True)
         os.makedirs(temp_path)
@@ -1252,25 +1498,23 @@ class EduSense_Config_Tab(QtWidgets.QWidget):
             with urllib.request.urlopen(url_zip) as response:
                 with open(output_file, "wb") as out_file:
                     shutil.copyfileobj(response, out_file)
-        except OSError as error:
-            print("Error during getting update file: ", error)
-            label_text = (
+            if edu_settings.show_comparision_of_zip_files(output_file):
+                edu_settings.update_data_from_zip(output_file)
+        except OSError:
+            label_text = _(
                 "Cannot download proper software.\n"
                 "Please check internet connection"
             )
             QtWidgets.QMessageBox.warning(
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )
-            shutil.rmtree(temp_path, ignore_errors=True)
             return
-
-        if edu_settings.show_comparision_of_zip_files(output_file):
-            print("instaluję dane z serwera")
-            edu_settings.update_data_from_zip(output_file)
-        shutil.rmtree(temp_path, ignore_errors=True)
-        self.update()
+        finally:
+            shutil.rmtree(temp_path, ignore_errors=True)
+            self.update()
 
     def update_zip_button_click(self):
+        """Get update from local zip file"""
         filename = QtWidgets.QFileDialog.getOpenFileName(
             self,
             _("Select zip file to copy (.zip)"),
@@ -1279,8 +1523,5 @@ class EduSense_Config_Tab(QtWidgets.QWidget):
         )
         if filename and filename[0] != "":
             if edu_settings.show_comparision_of_zip_files(filename[0]):
-                print("instalacja")
                 edu_settings.update_data_from_zip(filename[0])
-            else:
-                pass
         self.update()
