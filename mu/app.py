@@ -59,7 +59,7 @@ from .modes import (
     LegoMode,
     PicoMode,
     SnekMode,
-    EduSense,
+    CodeInPython,
 )
 from .interface.themes import NIGHT_STYLE, DAY_STYLE, CONTRAST_STYLE
 from . import settings
@@ -255,7 +255,7 @@ def setup_modes(editor, view):
         "pygamezero": PyGameZeroMode(editor, view),
         "lego": LegoMode(editor, view),
         "pico": PicoMode(editor, view),
-        "edusense": EduSense(editor, view),
+        "codeinpython": CodeInPython(editor, view),
     }
 
 

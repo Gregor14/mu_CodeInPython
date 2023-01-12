@@ -138,7 +138,7 @@ class Ui_Form(object):
         font.setBold(False)
         font.setWeight(50)
         self.update_server_button.setFont(font)
-        self.update_server_button.setText("Update from EduSense")
+        self.update_server_button.setText("Update from Internet")
         self.update_server_button.setObjectName("update_server_button")
         self.gridLayout.addWidget(self.update_server_button, 2, 1, 1, 1)
         self.verticalLayout.addWidget(self.update_group)

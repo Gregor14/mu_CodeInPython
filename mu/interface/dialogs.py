@@ -44,7 +44,7 @@ from PyQt5.QtGui import QTextCursor
 from mu.resources import load_icon
 from mu.interface.widgets import DeviceSelector
 from ..virtual_environment import venv
-from mu.modes.edusense import EduSense_Config_Tab
+from mu.modes.codeinpython import CodeInPython_Config_Tab
 
 
 logger = logging.getLogger(__name__)
@@ -567,7 +567,7 @@ class AdminDialog(QDialog):
         self.package_widget = None
         self.envar_widget = None
         self.python_anywhere_widget = None
-        self.edusense = None
+        self.codeinpython = None
 
     def setup(self, log, settings, packages, mode, device_list):
         self.setMinimumSize(600, 400)
@@ -586,7 +586,7 @@ class AdminDialog(QDialog):
         self.log_widget = LogWidget(self)
         self.log_widget.setup(log)
         self.tabs.addTab(self.log_widget, _("Current Log"))
-        if mode.short_name in ["python", "web", "pygamezero", "edusense"]:
+        if mode.short_name in ["python", "web", "pygamezero", "codeinpython"]:
             self.envar_widget = EnvironmentVariablesWidget(self)
             self.envar_widget.setup(settings.get("envars", ""))
             self.tabs.addTab(self.envar_widget, _("Python3 Environment"))
@@ -597,7 +597,7 @@ class AdminDialog(QDialog):
                 settings.get("microbit_runtime", ""),
             )
             self.tabs.addTab(self.microbit_widget, _("BBC micro:bit Settings"))
-        if mode.short_name in ["python", "web", "pygamezero", "edusense"]:
+        if mode.short_name in ["python", "web", "pygamezero", "codeinpython"]:
             self.package_widget = PackagesWidget(self)
             self.package_widget.setup(packages)
             self.tabs.addTab(self.package_widget, _("Third Party Packages"))
@@ -615,10 +615,10 @@ class AdminDialog(QDialog):
             self.tabs.addTab(
                 self.python_anywhere_widget, _("PythonAnywhere API")
             )
-        if mode.short_name == "edusense":
-            self.edusense = EduSense_Config_Tab(self)
-            self.edusense.setup(settings)
-            self.tabs.addTab(self.edusense, _("EduSense environment"))
+        if mode.short_name == "codeinpython":
+            self.codeinpython = CodeInPython_Config_Tab(self)
+            self.codeinpython.setup(settings)
+            self.tabs.addTab(self.codeinpython, _("CodeInPython environment"))
 
         # Configure local.
         self.locale_widget = LocaleWidget(self)

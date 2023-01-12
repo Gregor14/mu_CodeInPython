@@ -3,9 +3,9 @@ This mode is based on Pygame Zero mode.
 
 Copyright (c) 2015-2017 Nicholas H.Tollervey and others (see the AUTHORS file).
 
-Mode is dedicated to cooperate with EduSense devices. In addition, it deliver
+Mode is dedicated to cooperate with CodeInPython devices. In addition, it deliver
 very convinient solution to use by many users. Each of them can keep his own set of
-lessons, add new one from EduSense resurces, or from private collection.
+lessons, add new one from CodeInPython resurces, or from private collection.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-# import distutils
 import os
 import sys
 import re
@@ -31,7 +30,7 @@ import zipfile
 import importlib
 from datetime import datetime
 import xml.etree.ElementTree as ET
-
+from distutils.sysconfig import get_python_lib
 
 from mu.modes.base import get_default_workspace
 from mu.modes.api import PYTHON3_APIS, SHARED_APIS, PI_APIS, PYGAMEZERO_APIS
@@ -44,16 +43,16 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QRegExpValidator
 
-from mu.contrib.edusense_ui_users import Ui_dialog as Ui_Dialog_Users
-from mu.contrib.edusense_ui_tab_setup import Ui_Form as Ui_Tab_Settings
+from mu.contrib.codeinpython_ui_users import Ui_dialog as Ui_Dialog_Users
+from mu.contrib.codeinpython_ui_tab_setup import Ui_Form as Ui_Tab_Settings
 
 logger = logging.getLogger(__name__)
 
 
-def path_for_edusense_add(path_to_add=""):
+def path_for_codeinpython_add(path_to_add=""):
     """
     Adding specific path to sys.path. In this way will be simpler to include
-    modules from EduSense. It's needed because user work will be not in fixed
+    modules from CodeInPython. It's needed because user work will be not in fixed
     place, but in different folders. So, relative import will not work
     """
     if path_to_add == "":
@@ -183,22 +182,22 @@ class Dialog_GetText:
         return bool(result), self.edit_bar.text()
 
 
-class EduSense_Settings:
+class CodeInPython_Settings:
     """
     Class with set of tools needed by this mode.
     """
 
-    # file with stored path for EduSense stuff (to solve problem PYTHONPATH)
-    SEARCH_PATH_FILENAME = "edusense_path.pth"
-    # where on internet are placed updates for EduSense?
-    # URL_FOR_UPDATE_FILE = "http://www.tinyapi.eu/edusense/"
-    URL_FOR_UPDATE_FILE = "http://www.tinyapi.eu/edusense_demo/"
-    ZIP_FILENAME = "edusense_update.zip"
-    CONFIG_FILENAME = "edusense_config.xml"
+    # file with stored path for CodeInPython stuff (to solve problem PYTHONPATH)
+    SEARCH_PATH_FILENAME = "codeinpython_path.pth"
+    # where on internet are placed updates for CodeInPython?
+    # URL_FOR_UPDATE_FILE = "http://www.tinyapi.eu/codeinpython/"
+    URL_FOR_UPDATE_FILE = "http://www.tinyapi.eu/codeinpython_demo/"
+    ZIP_FILENAME = "codeinpython_update.zip"
+    CONFIG_FILENAME = "codeinpython_config.xml"
     EXAMPLE_DESC_FILENAME = "description.xml"
 
     SUBPATH_MU_CODE = get_default_workspace()
-    SUBPATH_MAIN = os.path.normpath("edusense_env")
+    SUBPATH_MAIN = os.path.normpath("codeinpython_env")
     SUBPATH_WORKSPACE = os.path.normpath("workspace")
     SUBPATH_ARCHIVE = os.path.normpath("archive")
     SUBPATH_EXAMPLES = os.path.normpath("examples")
@@ -206,7 +205,7 @@ class EduSense_Settings:
     SUBPATH_PRIVATE_EXAMPLES = os.path.normpath("private")
     SUBPATH_TRASH = os.path.normpath("trash")
     SUBPATH_TEMP = os.path.normpath("temp")
-    SUBPATH_LIBRARIES = os.path.normpath("edu_lib")
+    SUBPATH_LIBRARIES = os.path.normpath("code_lib")
     SUBPATH_MU_MODULE = os.path.normpath("mu_modules")
     SUBPATH_FIRMWARE = os.path.normpath("firmware")
     DEVICES_MODULE_NAME = "devices"
@@ -231,12 +230,12 @@ class EduSense_Settings:
         self.save_settings()
 
     def load_settings(self):
-        temp_settings = settings.settings.get("edusense")
+        temp_settings = settings.settings.get("codeinpython")
         if temp_settings:
             self.settings_from_file.update(temp_settings)
 
     def save_settings(self):
-        settings.settings.update({"edusense": self.settings_from_file})
+        settings.settings.update({"codeinpython": self.settings_from_file})
         settings.settings.save()
 
     def put_setting(self, key, value):
@@ -274,7 +273,7 @@ class EduSense_Settings:
             logger.error(
                 _(
                     "Unauthorized attempt to operate outside "
-                    "EduSense folder tree! Hacking?"
+                    "CodeInPython folder tree! Hacking?"
                 )
             )
         return result
@@ -459,7 +458,7 @@ class EduSense_Settings:
             QtWidgets.QMessageBox.warning(
                 None,
                 _("Error"),
-                "This is not proper archive from EduSense",
+                "This is not proper archive from CodeInPython",
                 QtWidgets.QMessageBox.Ok,
             )
         return False
@@ -620,18 +619,18 @@ class EduSense_Settings:
             return False
 
 
-edu_settings = EduSense_Settings()
+cip_settings = CodeInPython_Settings()
 
 
-class EduSense(PyGameZeroMode):
+class CodeInPython(PyGameZeroMode):
     """
-    Represents the functionality required by the Edusense mode
+    Represents the functionality required by the CodeInPython mode
     """
 
-    name = _("Edusense")
-    short_name = "edusense"
-    description = _("Have fun in the world of EduSense")
-    icon = "edusense"
+    name = _("CodeInPython")
+    short_name = "codeinpython"
+    description = _("Have fun in the world of CodeInPython")
+    icon = "codeinpython"
     runner = None
     builtins = [
         "clock",
@@ -662,21 +661,21 @@ class EduSense(PyGameZeroMode):
             {
                 "name": "run",
                 "display_name": _("Run"),
-                "description": _("Run your EduSense program."),
+                "description": _("Run your CodeInPython program."),
                 "handler": self.play_toggle,
                 "shortcut": "F5",
             },
             {
                 "name": "user",
-                "display_name": edu_settings.user_name,
+                "display_name": cip_settings.user_name,
                 "description": _("Current user"),
                 "handler": self.user_dialog,
                 "shortcut": "Ctrl+Shift+U",
             },
             {
-                "name": "edusense_pad",
+                "name": "codeinpython_pad",
                 "display_name": _("Devices"),
-                "description": _("Devices from EduSense"),
+                "description": _("Devices from CodeInPython"),
                 "handler": self.devices_dialog,
                 "shortcut": "Ctrl+Shift+G",
             },
@@ -686,28 +685,28 @@ class EduSense(PyGameZeroMode):
         pass
 
     def stop(self):
-        edu_settings.save_settings()
+        cip_settings.save_settings()
 
     def workspace_dir(self):
         self.initial_preparation()
-        edu_settings.register_panels_to_update(self)
-        # any move out Edusense mode, should logout user
-        edu_settings.user_name = ""
+        cip_settings.register_panels_to_update(self)
+        # any move out CodeInPython mode, should logout user
+        cip_settings.user_name = ""
 
         self.tabs_remove()
         self.workspace_update()
 
         # check, if in default place is present update.
-        if edu_settings.zip_check_content():
-            if edu_settings.show_comparision_of_zip_files():
-                edu_settings.update_data_from_zip()
+        if cip_settings.zip_check_content():
+            if cip_settings.show_comparision_of_zip_files():
+                cip_settings.update_data_from_zip()
             else:
-                os.remove(edu_settings.path_get("zip install default file"))
+                os.remove(cip_settings.path_get("zip install default file"))
 
         if self.view.current_tab and self.view.current_tab.path:
             path = path_clean(self.view.current_tab.path)
         else:
-            path = edu_settings.path_get("workspace")
+            path = cip_settings.path_get("workspace")
         return path
 
     def api(self):
@@ -726,7 +725,7 @@ class EduSense(PyGameZeroMode):
             play_slot = self.view.button_bar.slots["run"]
             play_slot.setIcon(load_icon("run"))
             play_slot.setText(_("Run"))
-            play_slot.setToolTip(_("Run your EduSense program."))
+            play_slot.setToolTip(_("Run your CodeInPython program."))
             self.set_buttons(modes=True)
         else:
             self.run_game()
@@ -734,7 +733,7 @@ class EduSense(PyGameZeroMode):
                 play_slot = self.view.button_bar.slots["run"]
                 play_slot.setIcon(load_icon("stop"))
                 play_slot.setText(_("Stop"))
-                play_slot.setToolTip(_("Stop your EduSense program."))
+                play_slot.setToolTip(_("Stop your CodeInPython program."))
                 self.set_buttons(modes=False)
 
     def run_game(self):
@@ -781,11 +780,11 @@ class EduSense(PyGameZeroMode):
         self.view.remove_python_runner()
 
     def initial_preparation(self):
-        path_for_edusense_add()
-        path_for_edusense_add(edu_settings.path_get("main"))
-        self.register_path_for_edu_env()
+        path_for_codeinpython_add()
+        path_for_codeinpython_add(cip_settings.path_get("main"))
+        self.register_path_for_cip_env()
 
-        edu_settings.language = self.editor.user_locale
+        cip_settings.language = self.editor.user_locale
 
         # let's check if required folders are exists. If not, create it.
         for element in (
@@ -798,7 +797,7 @@ class EduSense(PyGameZeroMode):
             "zip_archive",
             "mu_modules",
         ):
-            check_path = edu_settings.path_get(element)
+            check_path = cip_settings.path_get(element)
             if not os.path.isdir(check_path):
                 os.makedirs(check_path)
 
@@ -814,17 +813,19 @@ class EduSense(PyGameZeroMode):
         if old_packages != new_packages:
             self.editor.sync_package_state(old_packages, new_packages)
 
-    def register_path_for_edu_env(self):
+    def register_path_for_cip_env(self):
         """
-        Register path for EduSense environment in venv used by users.
+        Register path for CodeInPython environment in venv used by users.
         """
         # I'm not sure is that best way to do it. For now, is OK
-        edu_main_path = edu_settings.path_get("main")
-        file_path = os.path.join(venv.path, edu_settings.SEARCH_PATH_FILENAME)
+        cip_main_path = cip_settings.path_get("main")
+        file_path = os.path.join(
+            get_python_lib(0, 0, venv.path), cip_settings.SEARCH_PATH_FILENAME
+        )
 
         if not os.path.isfile(file_path):
             with open(file_path, "w") as config_path_file:
-                config_path_file.write(edu_main_path)
+                config_path_file.write(cip_main_path)
 
     def update(self):
         """
@@ -841,9 +842,9 @@ class EduSense(PyGameZeroMode):
         self.ui_user = Ui_Dialog_Users()
         self.ui_user.setupUi(self.dialog_user)
 
-        edu_settings.subpath_class = edu_settings.get_setting("class_name")
+        cip_settings.subpath_class = cip_settings.get_setting("class_name")
 
-        self.ui_user.user_edit.setText(edu_settings.user_name)
+        self.ui_user.user_edit.setText(cip_settings.user_name)
         self.ui_user.example_button.setEnabled(False)
         # to rid problems with special chars (i.e. when it will become
         # folder name), set of possible to use chars are limited.
@@ -873,7 +874,7 @@ class EduSense(PyGameZeroMode):
         self.dialog_user.exec()
 
     def examples_tree_clicked(self, item, column):
-        if item.directory != "" and edu_settings.user_name != "":
+        if item.directory != "" and cip_settings.user_name != "":
             self.ui_user.example_button.setEnabled(True)
         else:
             self.ui_user.example_button.setEnabled(False)
@@ -891,9 +892,9 @@ class EduSense(PyGameZeroMode):
                 )
                 return
             path_at_student = os.path.relpath(
-                dir_to_example, edu_settings.path_get("main")
+                dir_to_example, cip_settings.path_get("main")
             )
-            path_at_student = edu_settings.path_get("student", path_at_student)
+            path_at_student = cip_settings.path_get("student", path_at_student)
             if os.path.exists(path_at_student):
                 question = QtWidgets.QMessageBox.question(
                     None,
@@ -908,7 +909,7 @@ class EduSense(PyGameZeroMode):
             shutil.copytree(dir_to_example, path_at_student)
 
             # reload all files that are already open (for current student)
-            subpath_to_student = edu_settings.path_get("student")
+            subpath_to_student = cip_settings.path_get("student")
             list_of_lessons_paths = []
             current_tab_path = self.view.current_tab.path
             for tab in self.view.widgets:
@@ -936,14 +937,14 @@ class EduSense(PyGameZeroMode):
         locked = False
         start_file = None
         if os.path.isdir(dir):
-            desc_file = os.path.join(dir, edu_settings.EXAMPLE_DESC_FILENAME)
+            desc_file = os.path.join(dir, cip_settings.EXAMPLE_DESC_FILENAME)
             if os.path.exists(desc_file):
                 with open(desc_file, "r") as desc_xml:
                     try:
                         tree = ET.parse(desc_xml)
                         root = tree.getroot()
                         start_file = xml_get_with_lang(
-                            root, "start_file", edu_settings.language
+                            root, "start_file", cip_settings.language
                         )
                         locked_result = xml_get_with_lang(root, "locked")
                         if locked_result == "True":
@@ -965,15 +966,15 @@ class EduSense(PyGameZeroMode):
 
     def lessons_list_them(self, directory, list_item):
         """fill list with lessons added by user"""
-        full_dir = edu_settings.path_get("student", directory)
+        full_dir = cip_settings.path_get("student", directory)
         if os.path.isdir(full_dir):
             for element in os.listdir(full_dir):
                 if os.path.isdir(os.path.join(full_dir, element)):
-                    if element == edu_settings.SUBPATH_TRASH:
+                    if element == cip_settings.SUBPATH_TRASH:
                         continue
                     tooltip = None
                     desc_file = os.path.join(
-                        full_dir, element, edu_settings.EXAMPLE_DESC_FILENAME
+                        full_dir, element, cip_settings.EXAMPLE_DESC_FILENAME
                     )
                     if os.path.exists(desc_file):
                         with open(desc_file, "r") as desc_xml:
@@ -983,7 +984,7 @@ class EduSense(PyGameZeroMode):
                                 title = xml_get_with_lang(
                                     root,
                                     "title",
-                                    edu_settings.language,
+                                    cip_settings.language,
                                     separator=" ",
                                 )
                                 if title is None:
@@ -991,7 +992,7 @@ class EduSense(PyGameZeroMode):
                                 desc = xml_get_with_lang(
                                     root,
                                     "description",
-                                    edu_settings.language,
+                                    cip_settings.language,
                                     separator=" ",
                                 )
                                 if desc is None:
@@ -1002,7 +1003,7 @@ class EduSense(PyGameZeroMode):
                                 tooltip = xml_get_with_lang(
                                     root,
                                     "tooltip",
-                                    edu_settings.language,
+                                    cip_settings.language,
                                     separator="\n",
                                 )
                                 whole_name = "{}\n  {}".format(title, desc)
@@ -1050,17 +1051,17 @@ class EduSense(PyGameZeroMode):
                     )
 
                     # make trash bin if not yet exist
-                    trash_path = edu_settings.path_get(
+                    trash_path = cip_settings.path_get(
                         "student",
-                        edu_settings.SUBPATH_TRASH,
+                        cip_settings.SUBPATH_TRASH,
                         datetime.now().strftime("%Y_%m_%d %H-%M-%S"),
                     )
                     if not os.path.isdir(trash_path):
                         os.makedirs(trash_path)
                     shutil.move(list_item.directory, trash_path)
                     remove_empty_folders(
-                        edu_settings.path_get("student"),
-                        [edu_settings.EXAMPLE_DESC_FILENAME],
+                        cip_settings.path_get("student"),
+                        [cip_settings.EXAMPLE_DESC_FILENAME],
                     )
                     self.tabs_remove(project_file)
                     self.workspace_update()
@@ -1072,7 +1073,7 @@ class EduSense(PyGameZeroMode):
         if result and entered_name != "":
             dir_name = os.path.splitext(entered_name)[0]
             file_name = dir_name + ".py"
-            path_to_file = edu_settings.path_get(
+            path_to_file = cip_settings.path_get(
                 "student private", dir_name, file_name
             )
 
@@ -1085,14 +1086,14 @@ class EduSense(PyGameZeroMode):
                 )
                 if question == QtWidgets.QMessageBox.Yes:
                     shutil.rmtree(
-                        edu_settings.path_get("student private", dir_name)
+                        cip_settings.path_get("student private", dir_name)
                     )
                 else:
                     return False, ""
 
             try:
                 # attempt to make following private lesson
-                os.makedirs(edu_settings.path_get("student private", dir_name))
+                os.makedirs(cip_settings.path_get("student private", dir_name))
                 with open(path_to_file, "w"):
                     pass
 
@@ -1124,7 +1125,7 @@ class EduSense(PyGameZeroMode):
                 # in this way is recognized item dedicated to add private files
                 if (
                     self.ui_user.lessons_list.currentItem().directory
-                    == edu_settings.SUBPATH_PRIVATE_EXAMPLES
+                    == cip_settings.SUBPATH_PRIVATE_EXAMPLES
                 ):
                     self.lesson_custom_add()
                     self.workspace_update()
@@ -1173,7 +1174,7 @@ class EduSense(PyGameZeroMode):
         repaired_parh = path_clean(path_to_clean)
         if repaired_parh == "":
             # close all tabs with our students lessons
-            subpath_to_workspace = edu_settings.path_get("workspace")
+            subpath_to_workspace = cip_settings.path_get("workspace")
             for tab in self.view.widgets:
                 if (
                     tab.path is not None
@@ -1191,21 +1192,21 @@ class EduSense(PyGameZeroMode):
                     break
 
     def workspace_update(self):
-        """refresh main window with all data correspond to EduSense"""
+        """refresh main window with all data correspond to CodeInPython"""
         play_slot = self.view.button_bar.slots["user"]
-        play_slot.setText(edu_settings.user_name)
+        play_slot.setText(cip_settings.user_name)
 
-        if edu_settings.user_name != "":
+        if cip_settings.user_name != "":
             play_slot.setIcon(load_icon("user"))
         else:
             play_slot.setIcon(load_icon("user_missing"))
 
         # if exist, refresh also data in user panel
         if hasattr(self, "dialog_user"):
-            self.ui_user.user_edit.setText(edu_settings.user_name)
-            if edu_settings.user_name != "":
+            self.ui_user.user_edit.setText(cip_settings.user_name)
+            if cip_settings.user_name != "":
                 self.ui_user.lessons_label.setText(
-                    _("These are your lessons, ") + edu_settings.user_name
+                    _("These are your lessons, ") + cip_settings.user_name
                 )
             else:
                 self.ui_user.lessons_label.setText("...")
@@ -1216,8 +1217,8 @@ class EduSense(PyGameZeroMode):
 
     def user_change_clicked(self):
         if hasattr(self, "dialog_user"):
-            if edu_settings.user_name != self.ui_user.user_edit.text():
-                edu_settings.user_name = self.ui_user.user_edit.text()
+            if cip_settings.user_name != self.ui_user.user_edit.text():
+                cip_settings.user_name = self.ui_user.user_edit.text()
                 self.workspace_update()
                 self.tabs_remove()
 
@@ -1232,7 +1233,7 @@ class EduSense(PyGameZeroMode):
                 item = QtWidgets.QTreeWidgetItem(parent_item)
                 # first, we check if in this folder is present desc file
                 desc_file = os.path.join(
-                    full_dir, edu_settings.EXAMPLE_DESC_FILENAME
+                    full_dir, cip_settings.EXAMPLE_DESC_FILENAME
                 )
                 if os.path.exists(desc_file):
                     with open(desc_file, "r") as desc_xml:
@@ -1242,7 +1243,7 @@ class EduSense(PyGameZeroMode):
                             title = xml_get_with_lang(
                                 root,
                                 "title",
-                                edu_settings.language,
+                                cip_settings.language,
                                 separator=" ",
                             )
                             if title is None:
@@ -1250,7 +1251,7 @@ class EduSense(PyGameZeroMode):
                             desc = xml_get_with_lang(
                                 root,
                                 "description",
-                                edu_settings.language,
+                                cip_settings.language,
                                 separator=" ",
                             )
                             if desc is None:
@@ -1261,7 +1262,7 @@ class EduSense(PyGameZeroMode):
                             tooltip = xml_get_with_lang(
                                 root,
                                 "tooltip",
-                                edu_settings.language,
+                                cip_settings.language,
                                 separator="\n",
                             )
                             if tooltip is not None:
@@ -1308,9 +1309,9 @@ class EduSense(PyGameZeroMode):
         self.ui_user.examples_tree.clear()
         self.ui_user.examples_tree.clearSelection()
         try:
-            # Edusense examples
+            # CodeInPython examples
             self._examples_nodes_add(
-                edu_settings.path_get("examples"),
+                cip_settings.path_get("examples"),
                 "",
                 self.ui_user.examples_tree,
             )
@@ -1321,7 +1322,7 @@ class EduSense(PyGameZeroMode):
             item.directory = ""
             item.setIcon(0, load_icon("folder"))
             self._examples_nodes_add(
-                edu_settings.path_get("custom examples"), "", item
+                cip_settings.path_get("custom examples"), "", item
             )
         except Exception as err:
             label_text = _("Error during building examples structure")
@@ -1333,40 +1334,39 @@ class EduSense(PyGameZeroMode):
     def lessons_fill_form(self):
         self.ui_user.lessons_list.clear()
         self.ui_user.lessons_list.clearSelection()
-        if edu_settings.user_name != "":
+        if cip_settings.user_name != "":
             self.lessons_list_them("", self.ui_user.lessons_list)
             # new private program
             item = QtWidgets.QListWidgetItem(self.ui_user.lessons_list)
-            item.directory = edu_settings.SUBPATH_PRIVATE_EXAMPLES
+            item.directory = cip_settings.SUBPATH_PRIVATE_EXAMPLES
             item.setText("Add new own program")
             item.setIcon(load_icon("new"))
 
     #  DEVICES tab (for users)
     def devices_dialog(self):
-        """Open basic form (framework) for Edusense devices.
+        """Open basic form (framework) for CodeInPython devices.
         Later on, is called class from external module. In this way,
         we can easy make updates for this device window, without
         necessity update Mu Editor"""
         try:
-            edu_dev_lib = importlib.import_module(
+            cip_dev_lib = importlib.import_module(
                 "{}.{}".format(
-                    edu_settings.SUBPATH_MU_MODULE,
-                    edu_settings.DEVICES_MODULE_NAME,
+                    cip_settings.SUBPATH_MU_MODULE,
+                    cip_settings.DEVICES_MODULE_NAME,
                 )
             )
-            edu_dev_lib.Device_User_Panel(self, edu_settings.language)
-
         except Exception as err:
-            label_text = _("Loading Edusense library failed")
+            label_text = _("Loading CodeInPython library failed")
             label_text += '\n  {}: "{}"'.format(type(err).__name__, str(err))
-            label_text += "\nHave you loaded add-ons from EduSense?"
+            label_text += "\nHave you loaded add-ons from CodeInPython?"
             QtWidgets.QMessageBox.warning(
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )
+        cip_dev_lib.Device_User_Panel(self, cip_settings.language)
 
 
-class EduSense_Config_Tab(QtWidgets.QWidget):
-    """This is tab dedicated to configure Edusense environment"""
+class CodeInPython_Config_Tab(QtWidgets.QWidget):
+    """This is tab dedicated to configure CodeInPython environment"""
 
     # version_on_server = "??"
     # firmware_port = None
@@ -1377,7 +1377,7 @@ class EduSense_Config_Tab(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
-        edu_settings.register_panels_to_update(self)
+        cip_settings.register_panels_to_update(self)
 
     def setup(self, settings):
         self.settings = settings
@@ -1414,8 +1414,8 @@ class EduSense_Config_Tab(QtWidgets.QWidget):
             # for now, validation is base on checking only zip from archive
             # Maybe better will be, make large method with checking all folders,
             # content inside, etc. To determinate later...
-            valid, version_info = edu_settings.zip_get_version(
-                edu_settings.path_get("zip archive file")
+            valid, version_info = cip_settings.zip_get_version(
+                cip_settings.path_get("zip archive file")
             )
             if valid:
                 desc = (
@@ -1426,20 +1426,20 @@ class EduSense_Config_Tab(QtWidgets.QWidget):
             else:
                 desc = _(
                     "Error. "
-                    "There is no installed proper software from EduSense"
+                    "There is no installed proper software from CodeInPython"
                 )
             self.ui_config_tab.update_label.setText(desc)
 
-            name = edu_settings.get_setting("class_name")
+            name = cip_settings.get_setting("class_name")
             self.ui_config_tab.settings_class_edit.setText(name)
 
     def settings_save_data(self):
         # save data, clear user, refresh all panels
         if hasattr(self, "ui_config_tab"):
             student_class = self.ui_config_tab.settings_class_edit.text()
-            edu_settings.put_setting("class_name", student_class)
-            edu_settings.user_name = ""
-            edu_settings.update_all_panels_now()
+            cip_settings.put_setting("class_name", student_class)
+            cip_settings.user_name = ""
+            cip_settings.update_all_panels_now()
 
     def settings_class_click(self):
         self.settings_save_data()
@@ -1466,40 +1466,40 @@ class EduSense_Config_Tab(QtWidgets.QWidget):
 
     def service_button_click(self):
         try:
-            edu_dev_lib = importlib.import_module(
+            cip_dev_lib = importlib.import_module(
                 "{}.{}".format(
-                    edu_settings.SUBPATH_MU_MODULE,
-                    edu_settings.DEVICES_MODULE_NAME,
+                    cip_settings.SUBPATH_MU_MODULE,
+                    cip_settings.DEVICES_MODULE_NAME,
                 )
             )
-            edu_dev_lib.Device_Service_Panel(
-                self, edu_settings.language, edu_settings.path_get("firmware")
-            )
         except Exception as err:
-            label_text = _("Loading Edusense library failed")
+            label_text = _("Loading CodeInPython library failed")
             label_text += ':\n{}: "{}"'.format(type(err).__name__, str(err))
-            label_text += "\nHave you loaded add-ons from EduSense?"
+            label_text += "\nHave you loaded add-ons from CodeInPython?"
             QtWidgets.QMessageBox.warning(
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )
+        cip_dev_lib.Device_Service_Panel(
+            self, cip_settings.language, cip_settings.path_get("firmware")
+        )
 
     def update_server_button_click(self):
         """Get update from www"""
         url_zip = urllib.parse.urljoin(
-            edu_settings.URL_FOR_UPDATE_FILE, edu_settings.ZIP_FILENAME
+            cip_settings.URL_FOR_UPDATE_FILE, cip_settings.ZIP_FILENAME
         )
         # prepare temp folder to download there zip file
-        temp_path = edu_settings.path_get("main", "temp_internet")
+        temp_path = cip_settings.path_get("main", "temp_internet")
         shutil.rmtree(temp_path, ignore_errors=True)
         os.makedirs(temp_path)
 
-        output_file = os.path.join(temp_path, edu_settings.ZIP_FILENAME)
+        output_file = os.path.join(temp_path, cip_settings.ZIP_FILENAME)
         try:
             with urllib.request.urlopen(url_zip) as response:
                 with open(output_file, "wb") as out_file:
                     shutil.copyfileobj(response, out_file)
-            if edu_settings.show_comparision_of_zip_files(output_file):
-                edu_settings.update_data_from_zip(output_file)
+            if cip_settings.show_comparision_of_zip_files(output_file):
+                cip_settings.update_data_from_zip(output_file)
         except OSError:
             label_text = _(
                 "Cannot download proper software.\n"
@@ -1518,10 +1518,10 @@ class EduSense_Config_Tab(QtWidgets.QWidget):
         filename = QtWidgets.QFileDialog.getOpenFileName(
             self,
             _("Select zip file to copy (.zip)"),
-            edu_settings.path_get("main"),
+            cip_settings.path_get("main"),
             _("Zip compressed file (*.zip)"),
         )
         if filename and filename[0] != "":
-            if edu_settings.show_comparision_of_zip_files(filename[0]):
-                edu_settings.update_data_from_zip(filename[0])
+            if cip_settings.show_comparision_of_zip_files(filename[0]):
+                cip_settings.update_data_from_zip(filename[0])
         self.update()
