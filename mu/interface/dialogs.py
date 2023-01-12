@@ -311,6 +311,7 @@ class LocaleWidget(QWidget):
         "Español": "es",
         "Français": "fr",
         "日本語": "ja",
+        "Nederlands": "nl",
         "Polski": "pl",
         "Português (Br)": "pt_BR",
         "Português (Pt)": "pt_PT",

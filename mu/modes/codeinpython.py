@@ -1355,6 +1355,8 @@ class CodeInPython(PyGameZeroMode):
                     cip_settings.DEVICES_MODULE_NAME,
                 )
             )
+            cip_dev_lib.Device_User_Panel(self, cip_settings.language)
+
         except Exception as err:
             label_text = _("Loading CodeInPython library failed")
             label_text += '\n  {}: "{}"'.format(type(err).__name__, str(err))
@@ -1362,7 +1364,6 @@ class CodeInPython(PyGameZeroMode):
             QtWidgets.QMessageBox.warning(
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )
-        cip_dev_lib.Device_User_Panel(self, cip_settings.language)
 
 
 class CodeInPython_Config_Tab(QtWidgets.QWidget):
@@ -1472,6 +1473,10 @@ class CodeInPython_Config_Tab(QtWidgets.QWidget):
                     cip_settings.DEVICES_MODULE_NAME,
                 )
             )
+            cip_dev_lib.Device_Service_Panel(
+                self, cip_settings.language, cip_settings.path_get("firmware")
+            )
+
         except Exception as err:
             label_text = _("Loading CodeInPython library failed")
             label_text += ':\n{}: "{}"'.format(type(err).__name__, str(err))
@@ -1479,9 +1484,6 @@ class CodeInPython_Config_Tab(QtWidgets.QWidget):
             QtWidgets.QMessageBox.warning(
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )
-        cip_dev_lib.Device_Service_Panel(
-            self, cip_settings.language, cip_settings.path_get("firmware")
-        )
 
     def update_server_button_click(self):
         """Get update from www"""
