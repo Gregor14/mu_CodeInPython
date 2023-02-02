@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  \n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-01-09 11:54+0100\n"
+"POT-Creation-Date: 2023-01-26 08:55+0100\n"
 "PO-Revision-Date: 2018-09-11 18:23+0200\n"
 "Last-Translator: ABIX Edukacja - Adam Jurkiewicz <biuro@abixedukacja.eu>\n"
 "Language: pl\n"
@@ -136,18 +136,18 @@ msgstr ""
 msgid "Automatically detect"
 msgstr ""
 
-#: mu/interface/dialogs.py:334
+#: mu/interface/dialogs.py:335
 msgid ""
 "Please select the language for Mu's user interface from the choices "
 "listed below. <strong>Restart Mu for these changes to take "
 "effect.</strong>"
 msgstr ""
 
-#: mu/interface/dialogs.py:365
+#: mu/interface/dialogs.py:366
 msgid "How to flash MicroPython to your device"
 msgstr ""
 
-#: mu/interface/dialogs.py:372
+#: mu/interface/dialogs.py:373
 msgid ""
 "&nbsp;1. Determine the type of device (ESP8266 or ESP32)<br />&nbsp;2. "
 "Download firmware from the <a href=\"https://micropython.org/download\" "
@@ -156,89 +156,89 @@ msgid ""
 "'Browse' button<br/>&nbsp;5. Press 'Erase & write firmware'"
 msgstr ""
 
-#: mu/interface/dialogs.py:395
+#: mu/interface/dialogs.py:396
 msgid "Device:"
 msgstr ""
 
-#: mu/interface/dialogs.py:398
+#: mu/interface/dialogs.py:399
 msgid "Choose device type:"
 msgstr ""
 
-#: mu/interface/dialogs.py:402
+#: mu/interface/dialogs.py:403
 msgid "Firmware (.bin):"
 msgstr ""
 
-#: mu/interface/dialogs.py:404 mu/modes/web.py:107
+#: mu/interface/dialogs.py:405 mu/modes/web.py:107
 msgid "Browse"
 msgstr ""
 
-#: mu/interface/dialogs.py:405
+#: mu/interface/dialogs.py:406
 msgid "Erase && write firmware"
 msgstr ""
 
-#: mu/interface/dialogs.py:437
+#: mu/interface/dialogs.py:438
 msgid "Select MicroPython firmware (.bin)"
 msgstr ""
 
-#: mu/interface/dialogs.py:439
+#: mu/interface/dialogs.py:440
 msgid "Firmware (*.bin)"
 msgstr ""
 
-#: mu/interface/dialogs.py:574 mu/interface/main.py:1467
-#: mu/modes/edusense.py:1335
+#: mu/interface/dialogs.py:575 mu/interface/main.py:1467
+#: mu/modes/codeinpython.py:1390
 msgid "Mu Administration"
 msgstr "Administracja Mu"
 
-#: mu/interface/dialogs.py:588
+#: mu/interface/dialogs.py:589
 msgid "Current Log"
 msgstr "Aktualny Log"
 
-#: mu/interface/dialogs.py:592
+#: mu/interface/dialogs.py:593
 msgid "Python3 Environment"
 msgstr "Środowisko Pythona 3"
 
-#: mu/interface/dialogs.py:599
+#: mu/interface/dialogs.py:600
 msgid "BBC micro:bit Settings"
 msgstr "Ustawienia BBC micro:bit"
 
-#: mu/interface/dialogs.py:603
+#: mu/interface/dialogs.py:604
 msgid "Third Party Packages"
 msgstr ""
 
-#: mu/interface/dialogs.py:607
+#: mu/interface/dialogs.py:608
 msgid "ESP Firmware flasher"
 msgstr ""
 
-#: mu/interface/dialogs.py:616
+#: mu/interface/dialogs.py:617
 msgid "PythonAnywhere API"
 msgstr ""
 
-#: mu/interface/dialogs.py:621
+#: mu/interface/dialogs.py:622
 #, fuzzy
-msgid "EduSense environment"
+msgid "CodeInPython environment"
 msgstr "Środowisko Pythona 3"
 
-#: mu/interface/dialogs.py:627
+#: mu/interface/dialogs.py:628
 msgid "Select Language"
 msgstr ""
 
-#: mu/interface/dialogs.py:677
+#: mu/interface/dialogs.py:678
 msgid "Find / Replace"
 msgstr "Znajdź / Zastąp"
 
-#: mu/interface/dialogs.py:681
+#: mu/interface/dialogs.py:682
 msgid "Find:"
 msgstr "Znajdź:"
 
-#: mu/interface/dialogs.py:688
+#: mu/interface/dialogs.py:689
 msgid "Replace (optional):"
 msgstr "Zastąp (opcjonalne)"
 
-#: mu/interface/dialogs.py:694
+#: mu/interface/dialogs.py:695
 msgid "Replace all?"
 msgstr "Zastąp wszystkie?"
 
-#: mu/interface/dialogs.py:743
+#: mu/interface/dialogs.py:744
 msgid "Third Party Package Status"
 msgstr ""
 
@@ -433,74 +433,74 @@ msgstr "Wykryto nowe urządzenie {}."
 msgid "Detected new {} device."
 msgstr "Wykryto nowe urządzenie {}."
 
-#: mu/interface/panes.py:681
+#: mu/interface/panes.py:694
 msgid "File already exists; overwrite it?"
 msgstr "Plik już istnieje; Nadpisać go?"
 
-#: mu/interface/panes.py:682
+#: mu/interface/panes.py:695
 msgid "File already exists"
 msgstr "Plik już istnieje"
 
-#: mu/interface/panes.py:715
+#: mu/interface/panes.py:728
 #, fuzzy
 msgid "Copying '{}' to device."
 msgstr "Kopiowanie '{}' na micro:bita."
 
-#: mu/interface/panes.py:724
+#: mu/interface/panes.py:737
 #, fuzzy
 msgid "'{}' successfully copied to device."
 msgstr "'{}' skopiowane z sukcesem na micro:bita."
 
-#: mu/interface/panes.py:733
+#: mu/interface/panes.py:746
 msgid "Delete (cannot be undone)"
 msgstr "Usuń (nie może zostać cofnięte)"
 
-#: mu/interface/panes.py:739
+#: mu/interface/panes.py:752
 #, fuzzy
 msgid "Deleting '{}' from device."
 msgstr "Usuwanie '{}' z micro:bita."
 
-#: mu/interface/panes.py:748
+#: mu/interface/panes.py:761
 #, fuzzy
 msgid "'{}' successfully deleted from device."
 msgstr "'{}' usunięto z sukcesem z micro:bita."
 
-#: mu/interface/panes.py:781
+#: mu/interface/panes.py:794
 #, fuzzy
 msgid "Getting '{}' from device. Copying to '{}'."
 msgstr "Pobieranie '{}' z micro:bita. Kopiowanie do '{}'."
 
-#: mu/interface/panes.py:792
+#: mu/interface/panes.py:805
 #, fuzzy
 msgid "Successfully copied '{}' from the device to your computer."
 msgstr "Skopiowałem z powodzeniem '{}' z micro:bita na Twój komputer."
 
-#: mu/interface/panes.py:809
+#: mu/interface/panes.py:822
 msgid "Open in Mu"
 msgstr "Otwórz w Mu"
 
-#: mu/interface/panes.py:812
+#: mu/interface/panes.py:825
 msgid "Write to main.py on device"
 msgstr ""
 
-#: mu/interface/panes.py:815
+#: mu/interface/panes.py:828
 msgid "Open"
 msgstr "Otwórz"
 
-#: mu/interface/panes.py:821
+#: mu/interface/panes.py:834
 msgid "Opening '{}'"
 msgstr "Otwieranie '{}'"
 
-#: mu/interface/panes.py:864
+#: mu/interface/panes.py:877
 #, fuzzy
 msgid "Files on your device:"
 msgstr "Pliki na Twoim komputerze:"
 
-#: mu/interface/panes.py:866
+#: mu/interface/panes.py:879
 msgid "Files on your computer:"
 msgstr "Pliki na Twoim komputerze:"
 
-#: mu/interface/panes.py:939
+#: mu/interface/panes.py:952
 #, fuzzy
 msgid ""
 "There was a problem getting the list of files on the device. Please check"
@@ -511,7 +511,7 @@ msgstr ""
 " Mu dla informacji technicznych. Alternatywnie, spróbuj "
 "odłączyc/podłączyć swojego micro:bita i/lub zrestartować Mu."
 
-#: mu/interface/panes.py:953
+#: mu/interface/panes.py:966
 #, fuzzy
 msgid ""
 "There was a problem copying the file '{}' onto the device. Please check "
@@ -520,7 +520,7 @@ msgstr ""
 "Był problem z usunięciem '{}' z micro:bita. Proszę sprawdź logi Mu w celu"
 " uzyskania więcej informacji."
 
-#: mu/interface/panes.py:965
+#: mu/interface/panes.py:978
 #, fuzzy
 msgid ""
 "There was a problem deleting '{}' from the device. Please check Mu's logs"
@@ -529,7 +529,7 @@ msgstr ""
 "Był problem z usunięciem '{}' z micro:bita. Proszę sprawdź logi Mu w celu"
 " uzyskania więcej informacji."
 
-#: mu/interface/panes.py:977
+#: mu/interface/panes.py:990
 #, fuzzy
 msgid ""
 "There was a problem getting '{}' from the device. Please check Mu's logs "
@@ -1198,6 +1198,165 @@ msgstr ""
 "\n"
 "...do przechowywania Twojego kodu."
 
+#: mu/modes/codeinpython.py:259
+msgid "This method cause error"
+msgstr ""
+
+#: mu/modes/codeinpython.py:274
+msgid "Unauthorized attempt to operate outside CodeInPython folder tree! Hacking?"
+msgstr ""
+
+#: mu/modes/codeinpython.py:441
+msgid ""
+"Present software: {}, date: {}\n"
+"New software: {}, date: {}\n"
+"\n"
+"{}\n"
+"\n"
+"Do you wish to install it?"
+msgstr ""
+
+#: mu/modes/codeinpython.py:451 mu/modes/codeinpython.py:901
+#: mu/modes/codeinpython.py:1045 mu/modes/codeinpython.py:1084
+msgid "Question"
+msgstr ""
+
+#: mu/modes/codeinpython.py:460 mu/modes/codeinpython.py:548
+msgid "Error"
+msgstr ""
+
+#: mu/modes/codeinpython.py:490 mu/modes/codeinpython.py:562
+#: mu/modes/codeinpython.py:1117 mu/modes/codeinpython.py:1155
+#: mu/modes/codeinpython.py:1333 mu/modes/codeinpython.py:1367
+#: mu/modes/codeinpython.py:1487 mu/modes/codeinpython.py:1513
+msgid "Info"
+msgstr ""
+
+#: mu/modes/codeinpython.py:491
+msgid "Invalid data in zip file"
+msgstr ""
+
+#: mu/modes/codeinpython.py:545
+msgid "List of installation errors:\n"
+msgstr ""
+
+#: mu/modes/codeinpython.py:558
+msgid "Cannot install from this zip file"
+msgstr ""
+
+#: mu/modes/codeinpython.py:618
+msgid "This does not seems to be a valid zip file."
+msgstr ""
+
+#: mu/modes/codeinpython.py:630
+msgid "CodeInPython"
+msgstr ""
+
+#: mu/modes/codeinpython.py:632
+msgid "Have fun in the world of CodeInPython"
+msgstr ""
+
+#: mu/modes/codeinpython.py:663 mu/modes/codeinpython.py:727 mu/modes/esp.py:77
+#: mu/modes/python3.py:150 mu/modes/python3.py:199 mu/modes/web.py:93
+#: mu/modes/web.py:181
+msgid "Run"
+msgstr "Wykonuj"
+
+#: mu/modes/codeinpython.py:664 mu/modes/codeinpython.py:728
+#, fuzzy
+msgid "Run your CodeInPython program."
+msgstr "Wykonuj swój skrypt w Pythonie "
+
+#: mu/modes/codeinpython.py:671
+#, fuzzy
+msgid "Current user"
+msgstr "Aktualny Log"
+
+#: mu/modes/codeinpython.py:677
+msgid "Devices"
+msgstr ""
+
+#: mu/modes/codeinpython.py:678
+msgid "Devices from CodeInPython"
+msgstr ""
+
+#: mu/modes/codeinpython.py:735 mu/modes/debugger.py:61
+#: mu/modes/pygamezero.py:124 mu/modes/python3.py:207 mu/modes/web.py:189
+msgid "Stop"
+msgstr "Zatrzymaj"
+
+#: mu/modes/codeinpython.py:736
+#, fuzzy
+msgid "Stop your CodeInPython program."
+msgstr "Zatrzymaj swój skrypt w Pythonie"
+
+#: mu/modes/codeinpython.py:889
+msgid "Error!"
+msgstr ""
+
+#: mu/modes/codeinpython.py:890
+msgid "Can't find such example"
+msgstr ""
+
+#: mu/modes/codeinpython.py:902 mu/modes/codeinpython.py:1085
+#, fuzzy
+msgid "This lesson already exist. Overwrite it?"
+msgstr "Plik już istnieje; Nadpisać go?"
+
+#: mu/modes/codeinpython.py:1046
+msgid "Are you sure, to remove these lesson?"
+msgstr ""
+
+#: mu/modes/codeinpython.py:1111
+msgid "Error during creating file"
+msgstr ""
+
+#: mu/modes/codeinpython.py:1156
+msgid "Error during opening project"
+msgstr ""
+
+#: mu/modes/codeinpython.py:1211
+msgid "These are your lessons, "
+msgstr ""
+
+#: mu/modes/codeinpython.py:1323
+msgid "Custom examples"
+msgstr ""
+
+#: mu/modes/codeinpython.py:1330
+msgid "Error during building examples structure"
+msgstr ""
+
+#: mu/modes/codeinpython.py:1363 mu/modes/codeinpython.py:1483
+msgid "Loading CodeInPython library failed"
+msgstr ""
+
+#: mu/modes/codeinpython.py:1425
+msgid "Version of the currently installed software:"
+msgstr ""
+
+#: mu/modes/codeinpython.py:1430
+msgid "Error. There is no installed proper software from CodeInPython"
+msgstr ""
+
+#: mu/modes/codeinpython.py:1457
+msgid "Input network path to system configuration file"
+msgstr ""
+
+#: mu/modes/codeinpython.py:1508
+msgid ""
+"Cannot download proper software.\n"
+"Please check internet connection"
+msgstr ""
+
+#: mu/modes/codeinpython.py:1524
+msgid "Select zip file to copy (.zip)"
+msgstr ""
+
+#: mu/modes/codeinpython.py:1526
+msgid "Zip compressed file (*.zip)"
+msgstr ""
+
 #: mu/modes/debugger.py:39
 msgid "Graphical Debugger"
 msgstr "Graficzny Debugger"
@@ -1205,11 +1364,6 @@ msgstr "Graficzny Debugger"
 #: mu/modes/debugger.py:41
 msgid "Debug your Python 3 code."
 msgstr "Debuguj swój kod Pythona 3."
-
-#: mu/modes/debugger.py:61 mu/modes/edusense.py:713 mu/modes/pygamezero.py:123
-#: mu/modes/python3.py:207 mu/modes/web.py:189
-msgid "Stop"
-msgstr "Zatrzymaj"
 
 #: mu/modes/debugger.py:62
 msgid "Stop the running code."
@@ -1270,154 +1424,6 @@ msgstr "Ostrzeżenie debuggera: {}"
 #: mu/modes/debugger.py:370
 msgid "Debugger error: {}"
 msgstr "Błędy debuggera: {}"
-
-#: mu/modes/edusense.py:256
-msgid "This method cause error"
-msgstr ""
-
-#: mu/modes/edusense.py:271
-msgid "Unauthorized attempt to operate outside EduSense folder tree! Hacking?"
-msgstr ""
-
-#: mu/modes/edusense.py:436
-msgid ""
-"Present software: {}, date: {}\n"
-"New software: {}, date: {}\n"
-"\n"
-"{}\n"
-"\n"
-"Do you wish to install it?"
-msgstr ""
-
-#: mu/modes/edusense.py:446 mu/modes/edusense.py:876 mu/modes/edusense.py:1004
-#: mu/modes/edusense.py:1043
-msgid "Question"
-msgstr ""
-
-#: mu/modes/edusense.py:455
-msgid "Error"
-msgstr ""
-
-#: mu/modes/edusense.py:485 mu/modes/edusense.py:540 mu/modes/edusense.py:1077
-#: mu/modes/edusense.py:1113 mu/modes/edusense.py:1278
-#: mu/modes/edusense.py:1312 mu/modes/edusense.py:1432
-#: mu/modes/edusense.py:1459
-msgid "Info"
-msgstr ""
-
-#: mu/modes/edusense.py:486
-msgid "Invalid data in zip file"
-msgstr ""
-
-#: mu/modes/edusense.py:535
-msgid "Cannot install from this zip file"
-msgstr ""
-
-#: mu/modes/edusense.py:596
-msgid "This does not seems to be a valid zip file."
-msgstr ""
-
-#: mu/modes/edusense.py:608
-msgid "Edusense"
-msgstr ""
-
-#: mu/modes/edusense.py:610
-msgid "Have fun in the world of EduSense"
-msgstr ""
-
-#: mu/modes/edusense.py:641 mu/modes/edusense.py:705 mu/modes/esp.py:77
-#: mu/modes/python3.py:150 mu/modes/python3.py:199 mu/modes/web.py:93
-#: mu/modes/web.py:181
-msgid "Run"
-msgstr "Wykonuj"
-
-#: mu/modes/edusense.py:642 mu/modes/edusense.py:706
-msgid "Run your EduSense program."
-msgstr ""
-
-#: mu/modes/edusense.py:649
-#, fuzzy
-msgid "Current user"
-msgstr "Aktualny Log"
-
-#: mu/modes/edusense.py:655
-msgid "Devices"
-msgstr ""
-
-#: mu/modes/edusense.py:656
-msgid "Devices from EduSense"
-msgstr ""
-
-#: mu/modes/edusense.py:714
-msgid "Stop your EduSense program."
-msgstr ""
-
-#: mu/modes/edusense.py:864
-msgid "Error!"
-msgstr ""
-
-#: mu/modes/edusense.py:865
-msgid "Can't find such example"
-msgstr ""
-
-#: mu/modes/edusense.py:877 mu/modes/edusense.py:1044
-#, fuzzy
-msgid "This lesson already exist. Overwrite it?"
-msgstr "Plik już istnieje; Nadpisać go?"
-
-#: mu/modes/edusense.py:1005
-msgid "Are you sure, to remove these lesson?"
-msgstr ""
-
-#: mu/modes/edusense.py:1070
-msgid "Error during creating file"
-msgstr ""
-
-#: mu/modes/edusense.py:1114
-msgid "Error during opening project"
-msgstr ""
-
-#: mu/modes/edusense.py:1169
-msgid "These are your lessons, "
-msgstr ""
-
-#: mu/modes/edusense.py:1267
-msgid "Custom examples"
-msgstr ""
-
-#: mu/modes/edusense.py:1274
-msgid "Error during building examples structure"
-msgstr ""
-
-#: mu/modes/edusense.py:1308 mu/modes/edusense.py:1427
-msgid "Loading Edusense library failed"
-msgstr ""
-
-#: mu/modes/edusense.py:1370
-msgid "Version of the currently installed software:"
-msgstr ""
-
-#: mu/modes/edusense.py:1375
-msgid "Error. There is no installed proper software from EduSense"
-msgstr ""
-
-#: mu/modes/edusense.py:1402
-msgid "Input network path to system configuration file"
-msgstr ""
-
-#: mu/modes/edusense.py:1454
-msgid ""
-"Cannot download proper software.\n"
-"Please check internet connection"
-msgstr ""
-
-#: mu/modes/edusense.py:1470
-msgid "Select zip file to copy (.zip)"
-msgstr ""
-
-#: mu/modes/edusense.py:1472
-msgid "Zip compressed file (*.zip)"
-msgstr ""
 
 #: mu/modes/esp.py:35
 msgid "ESP MicroPython"
@@ -1707,55 +1713,55 @@ msgstr ""
 "\n"
 "...do przechowywania Twojego kodu."
 
-#: mu/modes/pygamezero.py:35
+#: mu/modes/pygamezero.py:36
 msgid "Pygame Zero"
 msgstr "Pygame Zero"
 
-#: mu/modes/pygamezero.py:37
+#: mu/modes/pygamezero.py:38
 msgid "Make games with Pygame Zero."
 msgstr "Twórz gry z Pygame Zero."
 
-#: mu/modes/pygamezero.py:65 mu/modes/pygamezero.py:115
+#: mu/modes/pygamezero.py:66 mu/modes/pygamezero.py:116
 msgid "Play"
 msgstr "Graj"
 
-#: mu/modes/pygamezero.py:66 mu/modes/pygamezero.py:116
+#: mu/modes/pygamezero.py:67 mu/modes/pygamezero.py:117
 msgid "Play your Pygame Zero game."
 msgstr "Graj w swoją grę Pygame Zero."
 
-#: mu/modes/pygamezero.py:72 mu/modes/web.py:128
+#: mu/modes/pygamezero.py:73 mu/modes/web.py:128
 msgid "Images"
 msgstr "Obrazki"
 
-#: mu/modes/pygamezero.py:73
+#: mu/modes/pygamezero.py:74
 msgid "Show the images used by Pygame Zero."
 msgstr "Pokaż obrazki używane przez Pygame Zero."
 
-#: mu/modes/pygamezero.py:79
+#: mu/modes/pygamezero.py:80
 msgid "Fonts"
 msgstr "Czcionki"
 
-#: mu/modes/pygamezero.py:80
+#: mu/modes/pygamezero.py:81
 msgid "Show the fonts used by Pygame Zero."
 msgstr "Pokaż czcionki używane przez Pygame Zero."
 
-#: mu/modes/pygamezero.py:86
+#: mu/modes/pygamezero.py:87
 msgid "Sounds"
 msgstr "Dźwięki"
 
-#: mu/modes/pygamezero.py:87
+#: mu/modes/pygamezero.py:88
 msgid "Show the sounds used by Pygame Zero."
 msgstr "Pokaż dźwięki używane przez Pygame Zero."
 
-#: mu/modes/pygamezero.py:93
+#: mu/modes/pygamezero.py:94
 msgid "Music"
 msgstr "Muzyka"
 
-#: mu/modes/pygamezero.py:94
+#: mu/modes/pygamezero.py:95
 msgid "Show the music used by Pygame Zero."
 msgstr "Pokaż muzykę używaną przez Pygame Zero."
 
-#: mu/modes/pygamezero.py:124
+#: mu/modes/pygamezero.py:125
 msgid "Stop your Pygame Zero game."
 msgstr "Zatrzymaj swoją grę Pygame Zero."
 
@@ -1985,5 +1991,32 @@ msgstr ""
 #~ "configured in the settings a local "
 #~ "directory cannot be used to saved "
 #~ "the final hex file."
+#~ msgstr ""
+
+#~ msgid "EduSense environment"
+#~ msgstr "Środowisko Pythona 3"
+
+#~ msgid "Unauthorized attempt to operate outside EduSense folder tree! Hacking?"
+#~ msgstr ""
+
+#~ msgid "Edusense"
+#~ msgstr ""
+
+#~ msgid "Have fun in the world of EduSense"
+#~ msgstr ""
+
+#~ msgid "Run your EduSense program."
+#~ msgstr ""
+
+#~ msgid "Devices from EduSense"
+#~ msgstr ""
+
+#~ msgid "Stop your EduSense program."
+#~ msgstr ""
+
+#~ msgid "Loading Edusense library failed"
+#~ msgstr ""
+
+#~ msgid "Error. There is no installed proper software from EduSense"
 #~ msgstr ""
 

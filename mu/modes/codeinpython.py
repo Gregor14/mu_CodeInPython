@@ -163,7 +163,7 @@ class Dialog_GetText:
         if self.validator != "":
             self.edit_bar.setValidator(
                 QRegExpValidator(QRegExp(self.validator))
-            )  # i.e.: r"[0-9A-Za-z_+=-]{20}")))
+            )  # i.e.: r"[0-9A-Za-z_+=-]{20}"
         self.edit_bar.returnPressed.connect(self.win.accept)
 
         self.box = QtWidgets.QDialogButtonBox(
@@ -195,6 +195,7 @@ class CodeInPython_Settings:
     ZIP_FILENAME = "codeinpython_update.zip"
     CONFIG_FILENAME = "codeinpython_config.xml"
     EXAMPLE_DESC_FILENAME = "description.xml"
+    MARKER_FOR_I18N_IN_COMMENTS = "#$"
 
     SUBPATH_MU_CODE = get_default_workspace()
     SUBPATH_MAIN = os.path.normpath("codeinpython_env")
@@ -216,18 +217,12 @@ class CodeInPython_Settings:
         self.subpath_class = os.path.normpath(
             self.settings_from_file["class_name"]
         )
-        self.user_name = ""
         self.language = "pl"
+        self.user_name = ""
 
         settings.settings.init()
         settings.settings.register_for_autosave()
         self.load_settings()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.save_settings()
-
-    def __del__(self):
-        self.save_settings()
 
     def load_settings(self):
         temp_settings = settings.settings.get("codeinpython")
@@ -256,13 +251,11 @@ class CodeInPython_Settings:
             try:
                 element.update()
             except Exception as err:
-                label_text = _("This method cause error")
-                label_text += ':\n{}: "{}"'.format(
-                    type(err).__name__, str(err)
-                )
+                label_text = _("This method to update elements " "cause error")
+                label_text += ":\n{}: {}".format(type(err).__name__, str(err))
                 logger.error(label_text)
 
-    def valid_path(self, path_input, allow_main):
+    def valid_path(self, path_input, allow_main=False):
         path_limit = self.__path_create("main")
         path_to_check = path_clean(path_input)
         if allow_main:
@@ -422,6 +415,85 @@ class CodeInPython_Settings:
             "Can't find method to assembly path for command: ", place
         )
 
+    @staticmethod
+    def comment_get_from_string(line):
+        is_string = ""
+        escape = False
+        for i in range(len(line)):
+            if escape:
+                escape = False
+                continue
+            if is_string:
+                if line[i] == "\\":
+                    escape = True
+                    continue
+                if line[i] == is_string:
+                    is_string = ""
+            else:
+                if line[i] == '"' or line[i] == "'":
+                    is_string = line[i]
+                else:
+                    if line[i] == "#":
+                        return line[i:]
+        return ""
+
+    @staticmethod
+    def i18n_extract(line, separator="#$", lang="en"):
+        chunks = line.split(separator)
+        new_comments = ""
+
+        for chunk in chunks:
+            if chunk.startswith("#"):
+                new_comments += chunk
+                continue
+            elif chunk.startswith(lang):
+                new_comments += "" + chunk[len(lang) :]
+                continue
+            else:
+                pass
+        if new_comments and not new_comments.startswith("#"):
+            new_comments = "#" + new_comments
+        return new_comments
+
+    def copy2_with_i18n(self, *args, **kwargs):
+        """
+        Method to adjust copying file (only .py) with i18n
+        """
+        result = shutil.copy2(*args, **kwargs)
+
+        lang_to_use = "en"  # this is default language
+
+        if os.path.splitext(args[1])[1] == ".py":
+            # first, we check if in file is at least one comment in desired language
+            with open(args[1]) as file:
+                marker = self.MARKER_FOR_I18N_IN_COMMENTS + self.language
+                for line in file:
+                    comment = self.comment_get_from_string(line)
+                    if marker in comment:
+                        lang_to_use = self.language
+                        break
+
+            new_content = ""
+            with open(args[1]) as file:
+                for line in file:
+                    line_to_rebuild = line.strip("\r\n")
+                    comment = self.comment_get_from_string(line_to_rebuild)
+                    localized_comment = self.i18n_extract(
+                        comment,
+                        self.MARKER_FOR_I18N_IN_COMMENTS,
+                        lang_to_use,
+                    )
+                    line_to_rebuild = line_to_rebuild.replace(
+                        comment, localized_comment
+                    )
+                    if not line_to_rebuild.strip(" \t") and comment:
+                        continue
+                    line_to_rebuild = line_to_rebuild + os.linesep
+                    new_content = new_content + line_to_rebuild
+            with open(args[1], "bw") as file:
+                file.write(new_content.encode())
+        return result
+
     def show_comparision_of_zip_files(self, source=""):
         if source == "":
             source_path = self.path_get("zip install default file")
@@ -491,7 +563,7 @@ class CodeInPython_Settings:
                 _("Invalid data in zip file"),
                 QtWidgets.QMessageBox.Ok,
             )
-            return
+            return False
 
         if not os.path.exists(destinantion_path):
             os.makedirs(destinantion_path)
@@ -649,8 +721,8 @@ class CodeInPython(PyGameZeroMode):
         "screen",
     ]
 
-    def __init__(self, editor, view):
-        super().__init__(editor, view)
+    # def __init__(self, editor, view):
+    #     super().__init__(editor, view)
 
     def actions(self):
         """
@@ -681,8 +753,8 @@ class CodeInPython(PyGameZeroMode):
             },
         ]
 
-    def activate(self):
-        pass
+    # def activate(self):
+    #     pass
 
     def stop(self):
         cip_settings.save_settings()
@@ -696,7 +768,7 @@ class CodeInPython(PyGameZeroMode):
         self.tabs_remove()
         self.workspace_update()
 
-        # check, if in default place is present update.
+        # check, if in default place is present update (zip file).
         if cip_settings.zip_check_content():
             if cip_settings.show_comparision_of_zip_files():
                 cip_settings.update_data_from_zip()
@@ -906,7 +978,12 @@ class CodeInPython(PyGameZeroMode):
                     shutil.rmtree(path_at_student)
                 else:
                     return
-            shutil.copytree(dir_to_example, path_at_student)
+            shutil.copytree(
+                dir_to_example,
+                path_at_student,
+                copy_function=cip_settings.copy2_with_i18n,
+                dirs_exist_ok=True,
+            )
 
             # reload all files that are already open (for current student)
             subpath_to_student = cip_settings.path_get("student")
@@ -963,6 +1040,7 @@ class CodeInPython(PyGameZeroMode):
                 return False, full_dir
             else:
                 return True, full_dir
+        return False, ""
 
     def lessons_list_them(self, directory, list_item):
         """fill list with lessons added by user"""
@@ -1118,6 +1196,7 @@ class CodeInPython(PyGameZeroMode):
                     QtWidgets.QMessageBox.Ok,
                 )
                 return False, ""
+        return False, ""
 
     def lessons_list_clicked(self):
         if hasattr(self, "dialog_user"):
@@ -1527,3 +1606,9 @@ class CodeInPython_Config_Tab(QtWidgets.QWidget):
             if cip_settings.show_comparision_of_zip_files(filename[0]):
                 cip_settings.update_data_from_zip(filename[0])
         self.update()
+
+
+# if __name__ == "__main__":
+#     pass
+# else:
+#     from ...tests.modes import test_codeinpython

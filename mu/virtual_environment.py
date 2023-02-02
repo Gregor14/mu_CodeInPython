@@ -169,7 +169,7 @@ class Process(QObject):
         If the process fails to complete in time or returns an error, raise a
         VirtualEnvironmentError
         """
-        finished = self.process.waitForFinished(int(1000 * wait_for_s))
+        finished = self.process.waitForFinished(int(1000 * 10 * wait_for_s)) #gj
         exit_status = self.process.exitStatus()
         exit_code = self.process.exitCode()
         output = self.data()
