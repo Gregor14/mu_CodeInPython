@@ -988,7 +988,10 @@ class CodeInPython(PyGameZeroMode):
             # reload all files that are already open (for current student)
             subpath_to_student = cip_settings.path_get("student")
             list_of_lessons_paths = []
-            current_tab_path = self.view.current_tab.path
+            if self.view.current_tab:
+                current_tab_path = self.view.current_tab.path
+            else:
+                current_tab_path = None
             for tab in self.view.widgets:
                 if (
                     tab.path is not None
@@ -1002,7 +1005,7 @@ class CodeInPython(PyGameZeroMode):
             current_tab = None
             for element in list_of_lessons_paths:
                 self.editor.direct_load(element)
-                if os.path.samefile(current_tab_path, element):
+                if current_tab_path and os.path.samefile(current_tab_path, element):
                     current_tab = self.view.current_tab
 
             # set focus at same tab as before reloading files
