@@ -87,6 +87,15 @@ def recursive_overwrite(src, dest, ignore=None):
             src.replace(dest)
 
 
+def str_to_bool(value, default):
+    if isinstance(value, str):
+        if value.lower() in ("n", "no", "f", "false", "0"):
+            return False
+        elif value.lower() in ("y", "yes", "t", "true", "1"):
+            return True
+    return default
+
+
 def path_clean(path_to_clean="", lowercase=False, real=True):
     if path_to_clean == "":
         return ""
@@ -100,7 +109,7 @@ def path_clean(path_to_clean="", lowercase=False, real=True):
 
 
 def xml_get_with_lang(child, name, lang=None, default="en", separator=""):
-    result = None
+    result = ""
     lang_best_fit = None
 
     # first, find best suite language
@@ -117,16 +126,12 @@ def xml_get_with_lang(child, name, lang=None, default="en", separator=""):
             if lang_best_fit is None:
                 lang_best_fit = which_lang
 
-    # now, get all lines with choosen language
+    # now, get all lines with chosen language
     for element in child:
         if element.tag == name:
-            which_lang = element.get("lang")
-            if which_lang == lang_best_fit:
-                if result is None:
-                    result = element.text
-                else:
-                    result = "{}{}{}".format(result, separator, element.text)
-    return result
+            if element.get("lang") == lang_best_fit:
+                result = separator.join([result, element.text])
+    return result[len(separator) :] if result else None
 
 
 def remove_empty_folders(path_abs, files_to_ignore=[]):
@@ -460,12 +465,11 @@ class CodeInPython_Settings:
         Method to adjust copying file (only .py) with i18n
         """
         result = shutil.copy2(*args, **kwargs)
-
         lang_to_use = "en"  # this is default language
 
         if os.path.splitext(args[1])[1] == ".py":
             # first, we check if in file is at least one comment in desired language
-            with open(args[1]) as file:
+            with open(args[1], encoding="utf-8", errors="replace") as file:
                 marker = self.MARKER_FOR_I18N_IN_COMMENTS + self.language
                 for line in file:
                     comment = self.comment_get_from_string(line)
@@ -474,7 +478,7 @@ class CodeInPython_Settings:
                         break
 
             new_content = ""
-            with open(args[1]) as file:
+            with open(args[1], encoding="utf-8", errors="replace") as file:
                 for line in file:
                     line_to_rebuild = line.strip("\r\n")
                     comment = self.comment_get_from_string(line_to_rebuild)
@@ -547,14 +551,12 @@ class CodeInPython_Settings:
         # In this way we will not overwrite present, current data
         # In release mode it should be ""
         destination = ""
+        copy_to_arch = True
         destinantion_path = self.path_get("main", destination)
         if source == "":
             zip_file_path = self.path_get("zip install default file")
         else:
             zip_file_path = path_clean(source)
-
-        temp_path = self.path_get("temp")
-        shutil.rmtree(temp_path, ignore_errors=True)
 
         if not self.zip_check_content(zip_file_path):
             QtWidgets.QMessageBox.warning(
@@ -564,6 +566,8 @@ class CodeInPython_Settings:
                 QtWidgets.QMessageBox.Ok,
             )
             return False
+        temp_path = self.path_get("temp")
+        shutil.rmtree(temp_path, ignore_errors=True)
 
         if not os.path.exists(destinantion_path):
             os.makedirs(destinantion_path)
@@ -572,46 +576,43 @@ class CodeInPython_Settings:
         try:
             with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
                 zip_ref.extractall(temp_path)
-                with zip_ref.open(self.CONFIG_FILENAME, "r") as config:
-                    tree = ET.parse(config)
-                    root = tree.getroot()
-                    for child in root:
-                        if child.tag == "update":
-                            for element in child:
-                                if element.tag == "remove":
-                                    path_to_remove = self.path_get(
-                                        "main", destination, element.text
-                                    )
-                                    if self.valid_path(path_to_remove, False):
-                                        if os.path.isdir(path_to_remove):
-                                            shutil.rmtree(
-                                                path_to_remove,
-                                                ignore_errors=True,
-                                            )
-                                        else:
-                                            if os.path.isfile(path_to_remove):
-                                                os.remove(path_to_remove)
+                tree = ET.parse(zip_ref.open(self.CONFIG_FILENAME))
+                root = tree.getroot()
+                for child in root:
+                    if child.tag == "archive":
+                        copy_to_arch = str_to_bool(child.text, copy_to_arch)
+                    if child.tag == "update":
+                        for element in child:
+                            if element.tag == "remove":
+                                path_to_remove = self.path_get(
+                                    "main", destination, element.text
+                                )
+                                if self.valid_path(path_to_remove, False):
+                                    if os.path.isdir(path_to_remove):
+                                        shutil.rmtree(
+                                            path_to_remove,
+                                            ignore_errors=True,
+                                        )
                                     else:
-                                        list_of_errors += (
-                                            "- removing: {}\n".format(
-                                                element.text
-                                            )
-                                        )
-                            # it has to be done as two loops
-                            for element in child:
-                                if element.tag == "copy":
-                                    src = self.path_get("temp", element.text)
-                                    dest = self.path_get(
-                                        "main", destination, element.text
+                                        if os.path.isfile(path_to_remove):
+                                            os.remove(path_to_remove)
+                                else:
+                                    list_of_errors += (
+                                        "- removing: {}\n".format(element.text)
                                     )
-                                    if not os.path.exists(src):
-                                        list_of_errors += (
-                                            "- copying: {}\n".format(
-                                                element.text
-                                            )
-                                        )
-                                        continue
-                                    recursive_overwrite(src, dest)
+                        # it has to be done as two loops
+                        for element in child:
+                            if element.tag == "copy":
+                                src = self.path_get("temp", element.text)
+                                dest = self.path_get(
+                                    "main", destination, element.text
+                                )
+                                if not os.path.exists(src):
+                                    list_of_errors += "- copying: {}\n".format(
+                                        element.text
+                                    )
+                                    continue
+                                recursive_overwrite(src, dest)
             if list_of_errors != "":
                 list_of_errors = (
                     _("List of installation errors:\n") + list_of_errors
@@ -621,9 +622,10 @@ class CodeInPython_Settings:
                 )
             else:
                 archive_file_path = self.path_get("zip archive file")
-                if not os.path.exists(
-                    archive_file_path
-                ) or not os.path.samefile(zip_file_path, archive_file_path):
+                if copy_to_arch and (
+                    not os.path.exists(archive_file_path)
+                    or not os.path.samefile(zip_file_path, archive_file_path)
+                ):
                     shutil.copy2(zip_file_path, archive_file_path)
             return True
         except Exception as err:
@@ -640,31 +642,33 @@ class CodeInPython_Settings:
             shutil.rmtree(temp_path, ignore_errors=True)
 
     def zip_get_version(self, source):
-        if os.path.isfile(source):
-            if os.path.splitext(source)[1] == ".zip":
-                with zipfile.ZipFile(source, "r") as zip_ref:
-                    if self.CONFIG_FILENAME in zip_ref.namelist():
-                        with zip_ref.open(self.CONFIG_FILENAME, "r") as config:
-                            return self.xml_get_version(config)
+        if os.path.isfile(source) and os.path.splitext(source)[1] == ".zip":
+            with zipfile.ZipFile(source, "r") as zip_ref:
+                if self.CONFIG_FILENAME in zip_ref.namelist():
+                    with zip_ref.open(self.CONFIG_FILENAME, "r") as config:
+                        return self.xml_get_version(config)
         return self.xml_get_version("")
 
     def xml_get_version(self, source):
-        result = {"release": "----", "date": "----", "description": "----"}
-        if source == "":
-            return False, result
+        def_val = {"release": "----", "date": "----", "description": "----"}
+        result = def_val
+        if source is None or source == "":
+            return False, def_val
+        try:
+            tree = ET.parse(source)
+            root = tree.getroot()
 
-        tree = ET.parse(source)
-        root = tree.getroot()
+            for child in root:
+                if child.tag == "release":
+                    result["release"] = child.text
+                if child.tag == "release_date":
+                    result["date"] = child.text
 
-        for child in root:
-            if child.tag == "release":
-                result["release"] = child.text
-            if child.tag == "release_date":
-                result["date"] = child.text
-
-        result["description"] = xml_get_with_lang(
-            root, "description", self.language, separator="\n"
-        )
+            result["description"] = xml_get_with_lang(
+                root, "description", self.language, separator="\n"
+            )
+        except Exception:
+            return False, def_val
         return True, result
 
     def zip_check_content(self, input_path=""):
@@ -1005,7 +1009,9 @@ class CodeInPython(PyGameZeroMode):
             current_tab = None
             for element in list_of_lessons_paths:
                 self.editor.direct_load(element)
-                if current_tab_path and os.path.samefile(current_tab_path, element):
+                if current_tab_path and os.path.samefile(
+                    current_tab_path, element
+                ):
                     current_tab = self.view.current_tab
 
             # set focus at same tab as before reloading files
@@ -1019,18 +1025,17 @@ class CodeInPython(PyGameZeroMode):
         if os.path.isdir(dir):
             desc_file = os.path.join(dir, cip_settings.EXAMPLE_DESC_FILENAME)
             if os.path.exists(desc_file):
-                with open(desc_file, "r") as desc_xml:
-                    try:
-                        tree = ET.parse(desc_xml)
-                        root = tree.getroot()
-                        start_file = xml_get_with_lang(
-                            root, "start_file", cip_settings.language
-                        )
-                        locked_result = xml_get_with_lang(root, "locked")
-                        if locked_result == "True":
-                            locked = True
-                    except Exception:
+                try:
+                    tree = ET.parse(desc_file)
+                    root = tree.getroot()
+                    start_file = xml_get_with_lang(
+                        root, "start_file", cip_settings.language
+                    )
+                    locked_result = xml_get_with_lang(root, "locked")
+                    if locked_result == "True":
                         locked = True
+                except Exception:
+                    locked = True
 
             if start_file is None:
                 start_file = os.path.split(dir)[1] + ".py"
@@ -1045,11 +1050,11 @@ class CodeInPython(PyGameZeroMode):
                 return True, full_dir
         return False, ""
 
-    def lessons_list_them(self, directory, list_item):
+    def _lessons_nodes_add(self, directory, list_item):
         """fill list with lessons added by user"""
         full_dir = cip_settings.path_get("student", directory)
         if os.path.isdir(full_dir):
-            for element in os.listdir(full_dir):
+            for element in sorted(os.listdir(full_dir)):
                 if os.path.isdir(os.path.join(full_dir, element)):
                     if element == cip_settings.SUBPATH_TRASH:
                         continue
@@ -1058,42 +1063,41 @@ class CodeInPython(PyGameZeroMode):
                         full_dir, element, cip_settings.EXAMPLE_DESC_FILENAME
                     )
                     if os.path.exists(desc_file):
-                        with open(desc_file, "r") as desc_xml:
-                            try:
-                                tree = ET.parse(desc_xml)
-                                root = tree.getroot()
-                                title = xml_get_with_lang(
-                                    root,
-                                    "title",
-                                    cip_settings.language,
-                                    separator=" ",
-                                )
-                                if title is None:
-                                    title = element
-                                desc = xml_get_with_lang(
-                                    root,
-                                    "description",
-                                    cip_settings.language,
-                                    separator=" ",
-                                )
-                                if desc is None:
-                                    desc = ".{}{}".format(
-                                        os.path.sep,
-                                        os.path.relpath(directory, element),
-                                    )
-                                tooltip = xml_get_with_lang(
-                                    root,
-                                    "tooltip",
-                                    cip_settings.language,
-                                    separator="\n",
-                                )
-                                whole_name = "{}\n  {}".format(title, desc)
-                            except Exception:
-                                whole_name = "!!!> {}\n  .{}{}".format(
-                                    element,
+                        try:
+                            tree = ET.parse(desc_file)
+                            root = tree.getroot()
+                            title = xml_get_with_lang(
+                                root,
+                                "title",
+                                cip_settings.language,
+                                separator=" ",
+                            )
+                            if title is None:
+                                title = element
+                            desc = xml_get_with_lang(
+                                root,
+                                "description",
+                                cip_settings.language,
+                                separator=" ",
+                            )
+                            if desc is None:
+                                desc = ".{}{}".format(
                                     os.path.sep,
                                     os.path.join(directory, element),
                                 )
+                            tooltip = xml_get_with_lang(
+                                root,
+                                "tooltip",
+                                cip_settings.language,
+                                separator="\n",
+                            )
+                            whole_name = "{}\n  {}".format(title, desc)
+                        except Exception:
+                            whole_name = "!!!> {}\n  .{}{}".format(
+                                element,
+                                os.path.sep,
+                                os.path.join(directory, element),
+                            )
                     else:
                         whole_name = "{}\n  .{}{}".format(
                             element,
@@ -1111,7 +1115,7 @@ class CodeInPython(PyGameZeroMode):
                         item.setIcon(load_icon("package"))
                         if tooltip is not None:
                             item.setToolTip(tooltip)
-                    self.lessons_list_them(
+                    self._lessons_nodes_add(
                         os.path.join(directory, element), list_item
                     )
 
@@ -1308,7 +1312,7 @@ class CodeInPython(PyGameZeroMode):
         """Add examples base on structure of folders with examples
         Additional info could be taken from files description.xml
         (one at each folder)"""
-        for element in os.listdir(os.path.join(base, folder)):
+        for element in sorted(os.listdir(os.path.join(base, folder))):
             full_dir = os.path.join(base, folder, element)
             locked = False
             if os.path.isdir(full_dir):
@@ -1318,55 +1322,54 @@ class CodeInPython(PyGameZeroMode):
                     full_dir, cip_settings.EXAMPLE_DESC_FILENAME
                 )
                 if os.path.exists(desc_file):
-                    with open(desc_file, "r") as desc_xml:
-                        try:
-                            tree = ET.parse(desc_xml)
-                            root = tree.getroot()
-                            title = xml_get_with_lang(
-                                root,
-                                "title",
-                                cip_settings.language,
-                                separator=" ",
+                    try:
+                        tree = ET.parse(desc_file)
+                        root = tree.getroot()
+                        title = xml_get_with_lang(
+                            root,
+                            "title",
+                            cip_settings.language,
+                            separator=" ",
+                        )
+                        if title is None:
+                            title = element
+                        desc = xml_get_with_lang(
+                            root,
+                            "description",
+                            cip_settings.language,
+                            separator=" ",
+                        )
+                        if desc is None:
+                            desc = ".{}{}".format(
+                                os.path.sep,
+                                os.path.relpath(full_dir, base),
                             )
-                            if title is None:
-                                title = element
-                            desc = xml_get_with_lang(
-                                root,
-                                "description",
-                                cip_settings.language,
-                                separator=" ",
-                            )
-                            if desc is None:
-                                desc = ".{}{}".format(
-                                    os.path.sep,
-                                    os.path.relpath(full_dir, base),
-                                )
-                            tooltip = xml_get_with_lang(
-                                root,
-                                "tooltip",
-                                cip_settings.language,
-                                separator="\n",
-                            )
-                            if tooltip is not None:
-                                item.setToolTip(0, tooltip)
-                            locked_result = xml_get_with_lang(root, "locked")
-                            if locked_result == "True":
-                                locked = True
-                            item.setText(0, "{}\n  {}".format(title, desc))
-                        except Exception:
-                            item.setText(
-                                0,
-                                "!!!> {}\n  .{}{}".format(
-                                    element,
-                                    os.path.sep,
-                                    os.path.relpath(full_dir, base),
-                                ),
-                            )
+                        tooltip = xml_get_with_lang(
+                            root,
+                            "tooltip",
+                            cip_settings.language,
+                            separator="\n",
+                        )
+                        if tooltip is not None:
+                            item.setToolTip(0, tooltip)
+                        locked_result = xml_get_with_lang(root, "locked")
+                        if locked_result == "True":
                             locked = True
+                        item.setText(0, u"{}\n  {}".format(title, desc))
+                    except Exception:
+                        item.setText(
+                            0,
+                            u"!!!> {}\n  .{}{}".format(
+                                element,
+                                os.path.sep,
+                                os.path.relpath(full_dir, base),
+                            ),
+                        )
+                        locked = True
                 else:
                     item.setText(
                         0,
-                        "{}\n  .{}{}".format(
+                        u"{}\n  .{}{}".format(
                             element,
                             os.path.sep,
                             os.path.relpath(full_dir, base),
@@ -1417,7 +1420,13 @@ class CodeInPython(PyGameZeroMode):
         self.ui_user.lessons_list.clear()
         self.ui_user.lessons_list.clearSelection()
         if cip_settings.user_name != "":
-            self.lessons_list_them("", self.ui_user.lessons_list)
+            # CodeInPython examples
+            self._lessons_nodes_add("examples", self.ui_user.lessons_list)
+            self._lessons_nodes_add(
+                "custom_examples", self.ui_user.lessons_list
+            )
+            self._lessons_nodes_add("private", self.ui_user.lessons_list)
+
             # new private program
             item = QtWidgets.QListWidgetItem(self.ui_user.lessons_list)
             item.directory = cip_settings.SUBPATH_PRIVATE_EXAMPLES
