@@ -222,7 +222,7 @@ class CodeInPython_Settings:
         self.subpath_class = os.path.normpath(
             self.settings_from_file["class_name"]
         )
-        self.language = "pl"
+        self.language = "en"
         self.user_name = ""
 
         settings.settings.init()
@@ -256,7 +256,7 @@ class CodeInPython_Settings:
             try:
                 element.update()
             except Exception as err:
-                label_text = _("This method to update elements " "cause error")
+                label_text = _("This method to update elements cause error")
                 label_text += ":\n{}: {}".format(type(err).__name__, str(err))
                 logger.error(label_text)
 
@@ -514,13 +514,13 @@ class CodeInPython_Settings:
                     "Present software: {}, date: {}\n"
                     "New software: {}, date: {}\n\n"
                     "{}\n\n"
-                    "Do you wish to install it?".format(
-                        present_version["release"],
-                        present_version["date"],
-                        new_version["release"],
-                        new_version["date"],
-                        new_version["description"],
-                    )
+                    "Do you wish to install it?"
+                ).format(
+                    present_version["release"],
+                    present_version["date"],
+                    new_version["release"],
+                    new_version["date"],
+                    new_version["description"],
                 )
                 question = QtWidgets.QMessageBox.question(
                     None,
@@ -534,7 +534,7 @@ class CodeInPython_Settings:
             QtWidgets.QMessageBox.warning(
                 None,
                 _("Error"),
-                "This is not proper archive from CodeInPython",
+                _("This is not proper archive from CodeInPython"),
                 QtWidgets.QMessageBox.Ok,
             )
         return False
@@ -597,9 +597,9 @@ class CodeInPython_Settings:
                                         if os.path.isfile(path_to_remove):
                                             os.remove(path_to_remove)
                                 else:
-                                    list_of_errors += (
-                                        "- removing: {}\n".format(element.text)
-                                    )
+                                    list_of_errors += _(
+                                        "-removing: {}\n"
+                                    ).format(element.text)
                         # it has to be done as two loops
                         for element in child:
                             if element.tag == "copy":
@@ -608,9 +608,9 @@ class CodeInPython_Settings:
                                     "main", destination, element.text
                                 )
                                 if not os.path.exists(src):
-                                    list_of_errors += "- copying: {}\n".format(
-                                        element.text
-                                    )
+                                    list_of_errors += _(
+                                        "-copying: {}\n"
+                                    ).format(element.text)
                                     continue
                                 recursive_overwrite(src, dest)
             if list_of_errors != "":
@@ -703,7 +703,7 @@ class CodeInPython(PyGameZeroMode):
     Represents the functionality required by the CodeInPython mode
     """
 
-    name = _("CodeInPython")
+    name = "CodeInPython"
     short_name = "codeinpython"
     description = _("Have fun in the world of CodeInPython")
     icon = "codeinpython"
@@ -927,12 +927,20 @@ class CodeInPython(PyGameZeroMode):
         self.ui_user.user_edit.setValidator(
             QRegExpValidator(QRegExp(r"[0-9A-Za-z_+=-]{20}"))
         )
-        self.ui_user.lessons_label.setText("...")
+        self.ui_user.user_label.setText(_("Your name"))
+        self.ui_user.user_button.setText(_("Confirm"))
+        self.ui_user.lessons_label.setText(_("Please, enter your name above"))
+        self.ui_user.examples_label.setText(_("Here are new examples"))
+        self.ui_user.lesson_use_button.setText(_("Use"))
+        self.ui_user.lesson_remove_button.setText(_("Remove"))
         self.ui_user.lesson_use_button.setEnabled(False)
         self.ui_user.lesson_remove_button.setEnabled(False)
 
         self.ui_user.examples_tree.itemClicked.connect(
             self.examples_tree_clicked
+        )
+        self.ui_user.examples_tree.doubleClicked.connect(
+            self.add_example_clicked
         )
         self.ui_user.example_button.clicked.connect(self.add_example_clicked)
         self.ui_user.user_button.clicked.connect(self.user_change_clicked)
@@ -959,7 +967,9 @@ class CodeInPython(PyGameZeroMode):
         # check if added folder exist
         if self.ui_user.examples_tree.currentItem() is not None:
             dir_to_example = self.ui_user.examples_tree.currentItem().directory
-            if dir_to_example == "" or not os.path.isdir(dir_to_example):
+            if dir_to_example == "" or cip_settings.user_name == "":
+                return
+            if not os.path.isdir(dir_to_example):
                 QtWidgets.QMessageBox.warning(
                     None,
                     _("Error!"),
@@ -1207,7 +1217,10 @@ class CodeInPython(PyGameZeroMode):
 
     def lessons_list_clicked(self):
         if hasattr(self, "dialog_user"):
-            if self.ui_user.lessons_list.currentRow() >= 0:
+            if (
+                self.ui_user.lessons_list.currentRow() >= 0
+                and self.ui_user.lessons_list.currentItem().directory
+            ):
                 # in this way is recognized item dedicated to add private files
                 if (
                     self.ui_user.lessons_list.currentItem().directory
@@ -1295,7 +1308,9 @@ class CodeInPython(PyGameZeroMode):
                     _("These are your lessons, ") + cip_settings.user_name
                 )
             else:
-                self.ui_user.lessons_label.setText("...")
+                self.ui_user.lessons_label.setText(
+                    _("Please, enter your name above")
+                )
 
             self.lessons_fill_form()
             self.examples_fill_form()
@@ -1389,7 +1404,29 @@ class CodeInPython(PyGameZeroMode):
                     base, os.path.join(folder, element), item
                 )
 
+    def _example_item_separator(self, text=""):
+        item = QtWidgets.QTreeWidgetItem()
+        item.directory = ""
+        item.setFlags(QtCore.Qt.NoItemFlags)
+        item.setTextAlignment(0, QtCore.Qt.AlignCenter)
+
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        font.setBold(True)
+        item.setFont(0, font)
+        item.setText(0, text)
+
+        brush_front = QtGui.QBrush()
+        brush_front.setStyle(QtCore.Qt.NoBrush)
+        brush_back = QtGui.QBrush(QtGui.QColor(0, 0, 0, 50))
+        item.setForeground(0, brush_front)
+        item.setBackground(0, brush_back)
+
+        item.setSizeHint(0, QtCore.QSize(0, 35))
+        return item
+
     def examples_fill_form(self):
+        items_counter = 0
         # first, clear list of all examples, then refill them
         self.ui_user.examples_tree.clear()
         self.ui_user.examples_tree.clearSelection()
@@ -1400,37 +1437,81 @@ class CodeInPython(PyGameZeroMode):
                 "",
                 self.ui_user.examples_tree,
             )
-
+            if self.ui_user.examples_tree.topLevelItemCount() > items_counter:
+                self.ui_user.examples_tree.insertTopLevelItem(
+                    items_counter, self._example_item_separator("CodeInPython")
+                )
+            items_counter = self.ui_user.examples_tree.topLevelItemCount()
             # custom examples
-            item = QtWidgets.QTreeWidgetItem(self.ui_user.examples_tree)
-            item.setText(0, _("Custom examples"))
-            item.directory = ""
-            item.setIcon(0, load_icon("folder"))
             self._examples_nodes_add(
-                cip_settings.path_get("custom examples"), "", item
+                cip_settings.path_get("custom examples"),
+                "",
+                self.ui_user.examples_tree,
             )
+            if self.ui_user.examples_tree.topLevelItemCount() > items_counter:
+                self.ui_user.examples_tree.insertTopLevelItem(
+                    items_counter,
+                    self._example_item_separator(_("Custom examples")),
+                )
         except Exception as err:
             label_text = _("Error during building examples structure")
-            label_text += ':\n{}: "{}"'.format(type(err).__name__, str(err))
+            label_text += ":\n{}: '{}'".format(type(err).__name__, str(err))
             QtWidgets.QMessageBox.warning(
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )
 
+    def _list_item_separator(self, text=""):
+        item = QtWidgets.QListWidgetItem()
+        item.directory = ""
+        item.setFlags(QtCore.Qt.NoItemFlags)
+        item.setTextAlignment(QtCore.Qt.AlignCenter)
+
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        font.setBold(True)
+        item.setFont(font)
+        item.setText(text)
+
+        brush_front = QtGui.QBrush()
+        brush_front.setStyle(QtCore.Qt.NoBrush)
+        brush_back = QtGui.QBrush(QtGui.QColor(0, 0, 0, 50))
+        brush_back.setStyle(QtCore.Qt.SolidPattern)
+        # brush_back.setStyle(QtCore.Qt.HorPattern)
+        item.setForeground(brush_front)
+        item.setBackground(brush_back)
+        return item
+
     def lessons_fill_form(self):
+        items_counter = 0
         self.ui_user.lessons_list.clear()
         self.ui_user.lessons_list.clearSelection()
         if cip_settings.user_name != "":
             # CodeInPython examples
             self._lessons_nodes_add("examples", self.ui_user.lessons_list)
+            if self.ui_user.lessons_list.count() > items_counter:
+                self.ui_user.lessons_list.insertItem(
+                    0, self._list_item_separator("CodeInPython")
+                )
+            items_counter = self.ui_user.lessons_list.count()
+            # Custom lessons (imported from custom examples)
             self._lessons_nodes_add(
                 "custom_examples", self.ui_user.lessons_list
             )
+            if self.ui_user.lessons_list.count() > items_counter:
+                self.ui_user.lessons_list.insertItem(
+                    items_counter,
+                    self._list_item_separator(_("Custom lessons")),
+                )
+            items_counter = self.ui_user.lessons_list.count()
+            # User lessons
+            self.ui_user.lessons_list.addItem(
+                self._list_item_separator(_("User lessons"))
+            )
             self._lessons_nodes_add("private", self.ui_user.lessons_list)
-
-            # new private program
+            # new private, user program
             item = QtWidgets.QListWidgetItem(self.ui_user.lessons_list)
             item.directory = cip_settings.SUBPATH_PRIVATE_EXAMPLES
-            item.setText("Add new own program")
+            item.setText(_("Add new own program"))
             item.setIcon(load_icon("new"))
 
     #  DEVICES tab (for users)
@@ -1450,8 +1531,8 @@ class CodeInPython(PyGameZeroMode):
 
         except Exception as err:
             label_text = _("Loading CodeInPython library failed")
-            label_text += '\n  {}: "{}"'.format(type(err).__name__, str(err))
-            label_text += "\nHave you loaded add-ons from CodeInPython?"
+            label_text += "\n  {}: '{}'\n".format(type(err).__name__, str(err))
+            label_text += _("Have you loaded add-ons from CodeInPython?")
             QtWidgets.QMessageBox.warning(
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )
@@ -1480,6 +1561,30 @@ class CodeInPython_Config_Tab(QtWidgets.QWidget):
         self.setLayout(self.ui_config_tab.verticalLayout)
         self.ui_config_tab.settings_class_edit.setValidator(
             QRegExpValidator(QRegExp(r"[0-9A-Za-z_+=-]{20}"))
+        )
+        self.ui_config_tab.warning_label.setText(
+            _(
+                "All settings below are ONLY for experienced users. "
+                "Please, don't touch it, if you don't know what you are doing"
+            )
+        )
+        self.ui_config_tab.settings_group.setTitle(_("Settings"))
+        self.ui_config_tab.settings_class_label.setText(
+            _("Name of current students class")
+        )
+        self.ui_config_tab.update_group.setTitle(
+            _("Update libraries, examples, software")
+        )
+        self.ui_config_tab.update_label.setText(
+            _("Version of the currently installed software:")
+        )
+        self.ui_config_tab.update_server_button.setText(
+            _("Update from Internet")
+        )
+        self.ui_config_tab.update_zip_button.setText(_("Update from zip file"))
+        self.ui_config_tab.firmware_group.setTitle(_("Devices maintenance"))
+        self.ui_config_tab.service_button.setText(
+            _("Open panel (for advanced users!)")
         )
 
         self.ui_config_tab.settings_class_edit.returnPressed.connect(
@@ -1514,11 +1619,13 @@ class CodeInPython_Config_Tab(QtWidgets.QWidget):
                     _("Version of the currently installed software:")
                     + version_info["release"]
                 )
-                desc += "\nDate: " + version_info["date"]
+                desc += _("\nDate:") + version_info["date"]
             else:
                 desc = _(
-                    "Error. "
-                    "There is no installed proper software from CodeInPython"
+                    _(
+                        "Error. There is no installed proper "
+                        "software from CodeInPython"
+                    )
                 )
             self.ui_config_tab.update_label.setText(desc)
 
@@ -1570,8 +1677,8 @@ class CodeInPython_Config_Tab(QtWidgets.QWidget):
 
         except Exception as err:
             label_text = _("Loading CodeInPython library failed")
-            label_text += ':\n{}: "{}"'.format(type(err).__name__, str(err))
-            label_text += "\nHave you loaded add-ons from CodeInPython?"
+            label_text += ":\n{}: '{}'\n".format(type(err).__name__, str(err))
+            label_text += _("Have you loaded add-ons from CodeInPython?")
             QtWidgets.QMessageBox.warning(
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )

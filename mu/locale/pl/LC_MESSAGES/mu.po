@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  \n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-01-26 08:55+0100\n"
+"POT-Creation-Date: 2023-02-16 18:53+0100\n"
 "PO-Revision-Date: 2018-09-11 18:23+0200\n"
 "Last-Translator: ABIX Edukacja - Adam Jurkiewicz <biuro@abixedukacja.eu>\n"
 "Language: pl\n"
@@ -185,7 +185,7 @@ msgid "Firmware (*.bin)"
 msgstr ""
 
 #: mu/interface/dialogs.py:575 mu/interface/main.py:1467
-#: mu/modes/codeinpython.py:1390
+#: mu/modes/codeinpython.py:1560
 msgid "Mu Administration"
 msgstr "Administracja Mu"
 
@@ -214,9 +214,8 @@ msgid "PythonAnywhere API"
 msgstr ""
 
 #: mu/interface/dialogs.py:622
-#, fuzzy
 msgid "CodeInPython environment"
-msgstr "Środowisko Pythona 3"
+msgstr "Środowisko CodeInPython"
 
 #: mu/interface/dialogs.py:628
 msgid "Select Language"
@@ -1199,14 +1198,14 @@ msgstr ""
 "...do przechowywania Twojego kodu."
 
 #: mu/modes/codeinpython.py:259
-msgid "This method cause error"
-msgstr ""
+msgid "This method to update elements cause error"
+msgstr "Ta metoda aktualizacji, spowodowała błąd"
 
-#: mu/modes/codeinpython.py:274
+#: mu/modes/codeinpython.py:272
 msgid "Unauthorized attempt to operate outside CodeInPython folder tree! Hacking?"
-msgstr ""
+msgstr "Nieautoryzowana próba operowania poza folderami CodeInPython! Hakerstwo?"
 
-#: mu/modes/codeinpython.py:441
+#: mu/modes/codeinpython.py:513
 msgid ""
 "Present software: {}, date: {}\n"
 "New software: {}, date: {}\n"
@@ -1215,147 +1214,244 @@ msgid ""
 "\n"
 "Do you wish to install it?"
 msgstr ""
+"Obecny program: {}, data: {}\n"
+"Nowy program: {}, data: {}\n"
+"\n"
+"{}\n"
+"\n"
+"Czy chcesz go zainstalować?"
 
-#: mu/modes/codeinpython.py:451 mu/modes/codeinpython.py:901
-#: mu/modes/codeinpython.py:1045 mu/modes/codeinpython.py:1084
+#: mu/modes/codeinpython.py:527 mu/modes/codeinpython.py:987
+#: mu/modes/codeinpython.py:1139 mu/modes/codeinpython.py:1178
 msgid "Question"
-msgstr ""
+msgstr "Pytanie"
 
-#: mu/modes/codeinpython.py:460 mu/modes/codeinpython.py:548
+#: mu/modes/codeinpython.py:536 mu/modes/codeinpython.py:621
 msgid "Error"
-msgstr ""
+msgstr "Błąd"
 
-#: mu/modes/codeinpython.py:490 mu/modes/codeinpython.py:562
-#: mu/modes/codeinpython.py:1117 mu/modes/codeinpython.py:1155
-#: mu/modes/codeinpython.py:1333 mu/modes/codeinpython.py:1367
-#: mu/modes/codeinpython.py:1487 mu/modes/codeinpython.py:1513
+#: mu/modes/codeinpython.py:537
+msgid "This is not proper archive from CodeInPython"
+msgstr "To nie jest poprawne archiwum od CodeInPython"
+
+#: mu/modes/codeinpython.py:564 mu/modes/codeinpython.py:636
+#: mu/modes/codeinpython.py:1211 mu/modes/codeinpython.py:1252
+#: mu/modes/codeinpython.py:1460 mu/modes/codeinpython.py:1537
+#: mu/modes/codeinpython.py:1683 mu/modes/codeinpython.py:1709
 msgid "Info"
-msgstr ""
+msgstr "Info"
 
-#: mu/modes/codeinpython.py:491
+#: mu/modes/codeinpython.py:565
 msgid "Invalid data in zip file"
-msgstr ""
+msgstr "Niewłaściwe dane w archiwum"
 
-#: mu/modes/codeinpython.py:545
-msgid "List of installation errors:\n"
-msgstr ""
+#: mu/modes/codeinpython.py:600
+msgid "-removing: {}\n"
+msgstr "-usuwanie: {}\n"
 
-#: mu/modes/codeinpython.py:558
-msgid "Cannot install from this zip file"
-msgstr ""
+#: mu/modes/codeinpython.py:611
+msgid "-copying: {}\n"
+msgstr "-kopiowanie: {}\n"
 
 #: mu/modes/codeinpython.py:618
-msgid "This does not seems to be a valid zip file."
-msgstr ""
-
-#: mu/modes/codeinpython.py:630
-msgid "CodeInPython"
-msgstr ""
+msgid "List of installation errors:\n"
+msgstr "Lista błędów podczas instalacji:\n"
 
 #: mu/modes/codeinpython.py:632
-msgid "Have fun in the world of CodeInPython"
-msgstr ""
+msgid "Cannot install from this zip file"
+msgstr "Nie mogę zainstalować z tego archiwum"
 
-#: mu/modes/codeinpython.py:663 mu/modes/codeinpython.py:727 mu/modes/esp.py:77
+#: mu/modes/codeinpython.py:694
+msgid "This does not seems to be a valid zip file."
+msgstr "To nie wygląda na poprawny plik z archiwum zip."
+
+#: mu/modes/codeinpython.py:708
+msgid "Have fun in the world of CodeInPython"
+msgstr "Miłej zabawy w świecie CodeInPython"
+
+#: mu/modes/codeinpython.py:739 mu/modes/codeinpython.py:803 mu/modes/esp.py:77
 #: mu/modes/python3.py:150 mu/modes/python3.py:199 mu/modes/web.py:93
 #: mu/modes/web.py:181
 msgid "Run"
 msgstr "Wykonuj"
 
-#: mu/modes/codeinpython.py:664 mu/modes/codeinpython.py:728
-#, fuzzy
+#: mu/modes/codeinpython.py:740 mu/modes/codeinpython.py:804
 msgid "Run your CodeInPython program."
 msgstr "Wykonuj swój skrypt w Pythonie "
 
-#: mu/modes/codeinpython.py:671
-#, fuzzy
+#: mu/modes/codeinpython.py:747
 msgid "Current user"
 msgstr "Aktualny Log"
 
-#: mu/modes/codeinpython.py:677
+#: mu/modes/codeinpython.py:753
 msgid "Devices"
-msgstr ""
+msgstr "Urządzenia"
 
-#: mu/modes/codeinpython.py:678
+#: mu/modes/codeinpython.py:754
 msgid "Devices from CodeInPython"
-msgstr ""
+msgstr "Urządzenia od CodeInPython"
 
-#: mu/modes/codeinpython.py:735 mu/modes/debugger.py:61
-#: mu/modes/pygamezero.py:124 mu/modes/python3.py:207 mu/modes/web.py:189
+#: mu/modes/codeinpython.py:811 mu/modes/debugger.py:61
+#: mu/modes/pygamezero.py:123 mu/modes/python3.py:207 mu/modes/web.py:189
 msgid "Stop"
 msgstr "Zatrzymaj"
 
-#: mu/modes/codeinpython.py:736
+#: mu/modes/codeinpython.py:812
 #, fuzzy
 msgid "Stop your CodeInPython program."
 msgstr "Zatrzymaj swój skrypt w Pythonie"
 
-#: mu/modes/codeinpython.py:889
+#: mu/modes/codeinpython.py:930
+msgid "Your name"
+msgstr "Twoje imię"
+
+#: mu/modes/codeinpython.py:931
+msgid "Confirm"
+msgstr "Potwierdź"
+
+#: mu/modes/codeinpython.py:932 mu/modes/codeinpython.py:1312
+msgid "Please, enter your name above"
+msgstr "Wpisz powyżej swoje imię"
+
+#: mu/modes/codeinpython.py:933
+msgid "Here are new examples"
+msgstr "Oto nowe przykłady"
+
+#: mu/modes/codeinpython.py:934
+msgid "Use"
+msgstr "Użyj"
+
+#: mu/modes/codeinpython.py:935
+msgid "Remove"
+msgstr "Usuń"
+
+#: mu/modes/codeinpython.py:975
 msgid "Error!"
-msgstr ""
+msgstr "Błąd!"
 
-#: mu/modes/codeinpython.py:890
+#: mu/modes/codeinpython.py:976
 msgid "Can't find such example"
-msgstr ""
+msgstr "Nie mogę znaleźć tego przykładu"
 
-#: mu/modes/codeinpython.py:902 mu/modes/codeinpython.py:1085
-#, fuzzy
+#: mu/modes/codeinpython.py:988 mu/modes/codeinpython.py:1179
 msgid "This lesson already exist. Overwrite it?"
-msgstr "Plik już istnieje; Nadpisać go?"
+msgstr "Plik już istnieje. Nadpisać go?"
 
-#: mu/modes/codeinpython.py:1046
+#: mu/modes/codeinpython.py:1140
 msgid "Are you sure, to remove these lesson?"
-msgstr ""
+msgstr "Czy na pewno usunąć tę lekcję?"
 
-#: mu/modes/codeinpython.py:1111
+#: mu/modes/codeinpython.py:1205
 msgid "Error during creating file"
-msgstr ""
+msgstr "Błąd podczas tworzenia pliku"
 
-#: mu/modes/codeinpython.py:1156
+#: mu/modes/codeinpython.py:1253
 msgid "Error during opening project"
-msgstr ""
+msgstr "Błąd podczas otwierania projektu"
 
-#: mu/modes/codeinpython.py:1211
+#: mu/modes/codeinpython.py:1308
 msgid "These are your lessons, "
-msgstr ""
+msgstr "Oto Twoje lekcje, "
 
-#: mu/modes/codeinpython.py:1323
+#: mu/modes/codeinpython.py:1454
 msgid "Custom examples"
-msgstr ""
-
-#: mu/modes/codeinpython.py:1330
-msgid "Error during building examples structure"
-msgstr ""
-
-#: mu/modes/codeinpython.py:1363 mu/modes/codeinpython.py:1483
-msgid "Loading CodeInPython library failed"
-msgstr ""
-
-#: mu/modes/codeinpython.py:1425
-msgid "Version of the currently installed software:"
-msgstr ""
-
-#: mu/modes/codeinpython.py:1430
-msgid "Error. There is no installed proper software from CodeInPython"
-msgstr ""
+msgstr "Indywidualne przykłady"
 
 #: mu/modes/codeinpython.py:1457
-msgid "Input network path to system configuration file"
-msgstr ""
+msgid "Error during building examples structure"
+msgstr "Błąd podczas tworzenia struktury z przykładami"
+
+#: mu/modes/codeinpython.py:1503
+msgid "Custom lessons"
+msgstr "Indywidualne lekcje"
 
 #: mu/modes/codeinpython.py:1508
+msgid "User lessons"
+msgstr "Lekcje użytkownika"
+
+#: mu/modes/codeinpython.py:1514
+msgid "Add new own program"
+msgstr "Dodaj swój własny program"
+
+#: mu/modes/codeinpython.py:1533 mu/modes/codeinpython.py:1679
+msgid "Loading CodeInPython library failed"
+msgstr "Ładowanie bibliotek CodeInPython nie powiodło się"
+
+#: mu/modes/codeinpython.py:1535 mu/modes/codeinpython.py:1681
+msgid "Have you loaded add-ons from CodeInPython?"
+msgstr "Czy pobrałeś dodatki dla CodeInPython?"
+
+#: mu/modes/codeinpython.py:1566
+msgid ""
+"All settings below are ONLY for experienced users. Please, don't touch "
+"it, if you don't know what you are doing"
+msgstr ""
+"Wszystkie ustawienia poniżej, są WYŁĄCZNIE dla zaawansowanych "
+"użytkowników.Proszę nic nie zmieniać, jeżeli nie wiesz, co robisz"
+
+#: mu/modes/codeinpython.py:1571
+msgid "Settings"
+msgstr "Ustawienia"
+
+#: mu/modes/codeinpython.py:1573
+msgid "Name of current students class"
+msgstr "Nazwa obecnej grupy nauczania"
+
+#: mu/modes/codeinpython.py:1576
+msgid "Update libraries, examples, software"
+msgstr "Aktualizacja bibliotek, przykładów, programu"
+
+#: mu/modes/codeinpython.py:1579 mu/modes/codeinpython.py:1619
+msgid "Version of the currently installed software:"
+msgstr "Wersja obecnie zainstalowanego programu:"
+
+#: mu/modes/codeinpython.py:1582
+msgid "Update from Internet"
+msgstr "Aktualizuj z Internetu"
+
+#: mu/modes/codeinpython.py:1584
+msgid "Update from zip file"
+msgstr "Aktualizuj z pliku zip"
+
+#: mu/modes/codeinpython.py:1585
+msgid "Devices maintenance"
+msgstr "Serwis urządzeń"
+
+#: mu/modes/codeinpython.py:1587
+msgid "Open panel (for advanced users!)"
+msgstr "Otwórz panel (zaawansowane!)"
+
+#: mu/modes/codeinpython.py:1622
+msgid ""
+"\n"
+"Date:"
+msgstr ""
+"\n"
+"Data:"
+
+#: mu/modes/codeinpython.py:1625
+msgid "Error. There is no installed proper software from CodeInPython"
+msgstr "Błąd. Nie ma zainstalowanych bibliotek z CodeInPython"
+
+#: mu/modes/codeinpython.py:1653
+msgid "Input network path to system configuration file"
+msgstr "Wprowadź ścieżkę sieciową do pliku konfiguracyjnego"
+
+#: mu/modes/codeinpython.py:1704
 msgid ""
 "Cannot download proper software.\n"
 "Please check internet connection"
 msgstr ""
+"Nie można pobrać odpowiednich bibliotek.\n"
+"Sprawdź połączenie internetowe"
 
-#: mu/modes/codeinpython.py:1524
+#: mu/modes/codeinpython.py:1720
 msgid "Select zip file to copy (.zip)"
-msgstr ""
+msgstr "Wybierz plik zip do kopiowania (.zip)"
 
-#: mu/modes/codeinpython.py:1526
+#: mu/modes/codeinpython.py:1722
 msgid "Zip compressed file (*.zip)"
-msgstr ""
+msgstr "Archiwum zip (*.zip)"
 
 #: mu/modes/debugger.py:39
 msgid "Graphical Debugger"
@@ -1713,55 +1809,55 @@ msgstr ""
 "\n"
 "...do przechowywania Twojego kodu."
 
-#: mu/modes/pygamezero.py:36
+#: mu/modes/pygamezero.py:35
 msgid "Pygame Zero"
 msgstr "Pygame Zero"
 
-#: mu/modes/pygamezero.py:38
+#: mu/modes/pygamezero.py:37
 msgid "Make games with Pygame Zero."
 msgstr "Twórz gry z Pygame Zero."
 
-#: mu/modes/pygamezero.py:66 mu/modes/pygamezero.py:116
+#: mu/modes/pygamezero.py:65 mu/modes/pygamezero.py:115
 msgid "Play"
 msgstr "Graj"
 
-#: mu/modes/pygamezero.py:67 mu/modes/pygamezero.py:117
+#: mu/modes/pygamezero.py:66 mu/modes/pygamezero.py:116
 msgid "Play your Pygame Zero game."
 msgstr "Graj w swoją grę Pygame Zero."
 
-#: mu/modes/pygamezero.py:73 mu/modes/web.py:128
+#: mu/modes/pygamezero.py:72 mu/modes/web.py:128
 msgid "Images"
 msgstr "Obrazki"
 
-#: mu/modes/pygamezero.py:74
+#: mu/modes/pygamezero.py:73
 msgid "Show the images used by Pygame Zero."
 msgstr "Pokaż obrazki używane przez Pygame Zero."
 
-#: mu/modes/pygamezero.py:80
+#: mu/modes/pygamezero.py:79
 msgid "Fonts"
 msgstr "Czcionki"
 
-#: mu/modes/pygamezero.py:81
+#: mu/modes/pygamezero.py:80
 msgid "Show the fonts used by Pygame Zero."
 msgstr "Pokaż czcionki używane przez Pygame Zero."
 
-#: mu/modes/pygamezero.py:87
+#: mu/modes/pygamezero.py:86
 msgid "Sounds"
 msgstr "Dźwięki"
 
-#: mu/modes/pygamezero.py:88
+#: mu/modes/pygamezero.py:87
 msgid "Show the sounds used by Pygame Zero."
 msgstr "Pokaż dźwięki używane przez Pygame Zero."
 
-#: mu/modes/pygamezero.py:94
+#: mu/modes/pygamezero.py:93
 msgid "Music"
 msgstr "Muzyka"
 
-#: mu/modes/pygamezero.py:95
+#: mu/modes/pygamezero.py:94
 msgid "Show the music used by Pygame Zero."
 msgstr "Pokaż muzykę używaną przez Pygame Zero."
 
-#: mu/modes/pygamezero.py:125
+#: mu/modes/pygamezero.py:124
 msgid "Stop your Pygame Zero game."
 msgstr "Zatrzymaj swoją grę Pygame Zero."
 
@@ -2018,5 +2114,14 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Error. There is no installed proper software from EduSense"
+#~ msgstr ""
+
+#~ msgid "This method cause error"
+#~ msgstr ""
+
+#~ msgid "CodeInPython"
+#~ msgstr ""
+
+#~ msgid "Custom examples"
 #~ msgstr ""
 
