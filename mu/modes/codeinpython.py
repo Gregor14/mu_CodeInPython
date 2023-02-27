@@ -216,37 +216,33 @@ class CodeInPython_Settings:
     SUBPATH_FIRMWARE = os.path.normpath("firmware")
     DEVICES_MODULE_NAME = "devices"
 
+    SETTINGS_FOR_FILE_DEFAULT = {
+        "class_name": "my_school",
+    }
+
     def __init__(self):
-        self.object_to_update = []
-        self.settings_from_file = {"class_name": "my_school"}
-        self.subpath_class = os.path.normpath(
-            self.settings_from_file["class_name"]
-        )
         self.language = "en"
         self.user_name = ""
+        self.object_to_update = []
 
-        settings.settings.init()
-        settings.settings.register_for_autosave()
-        self.load_settings()
+        self.config_file = self.Config_File(self)
+        self.config_file.filestem = "codeinpython"
+        self.config_file.DEFAULTS = self.SETTINGS_FOR_FILE_DEFAULT
+        self.config_file.autosave = True
+        self.config_file.reset()
+        self.config_file.init()  # it also load settings from file
+        self.subpath_class = os.path.normpath(self.config_file["class_name"])
 
-    def load_settings(self):
-        temp_settings = settings.settings.get("codeinpython")
-        if temp_settings:
-            self.settings_from_file.update(temp_settings)
+    class Config_File(settings.SettingsBase):
+        def __init__(self, outer, **kwargs):
+            super().__init__(**kwargs)
+            self.outer = outer
 
-    def save_settings(self):
-        settings.settings.update({"codeinpython": self.settings_from_file})
-        settings.settings.save()
-
-    def put_setting(self, key, value):
-        self.settings_from_file[key] = value
-        self.update_all_panels_now()
-
-    def get_setting(self, name=""):
-        if name != "" and name in self.settings_from_file:
-            return self.settings_from_file.get(name)
-        else:
-            return None
+        def __setitem__(self, item, value):
+            # if you need some additional action with save setting, please do here
+            if item == "class_name":
+                self.outer.subpath_class = os.path.normpath(value)
+            super().__setitem__(item, value)
 
     def register_panels_to_update(self, ptr):
         self.object_to_update.append(ptr)
@@ -266,7 +262,7 @@ class CodeInPython_Settings:
         if allow_main:
             result = path_to_check.startswith(path_limit)
         else:
-            result = (os.path.split(path_to_check)[0]).startswith(path_limit)
+            result = (os.path.dirname(path_to_check)).startswith(path_limit)
         if not result:
             logger.error(
                 _(
@@ -411,7 +407,8 @@ class CodeInPython_Settings:
         if path_subelements is not None:
             for element in path_subelements:
                 if element == "append py file":
-                    path = os.path.join(path, os.path.split(path)[1] + ".py")
+                    path = os.path.join(path, os.path.basename(path) + ".py")
+                    break
                 else:
                     path = os.path.join(path, element)
             return path_clean(path)
@@ -691,11 +688,8 @@ class CodeInPython_Settings:
             else:
                 return False
         else:
-            logger.warning(_("This does not seems to be a valid zip file."))
+            logger.warning(_("This does not seems to be a valid zip file"))
             return False
-
-
-cip_settings = CodeInPython_Settings()
 
 
 class CodeInPython(PyGameZeroMode):
@@ -725,8 +719,10 @@ class CodeInPython(PyGameZeroMode):
         "screen",
     ]
 
-    # def __init__(self, editor, view):
-    #     super().__init__(editor, view)
+    def __init__(self, editor, view):
+        super().__init__(editor, view)
+        self.initial_preparation()
+        cip_settings.register_panels_to_update(self)
 
     def actions(self):
         """
@@ -737,14 +733,14 @@ class CodeInPython(PyGameZeroMode):
             {
                 "name": "run",
                 "display_name": _("Run"),
-                "description": _("Run your CodeInPython program."),
+                "description": _("Run your CodeInPython program"),
                 "handler": self.play_toggle,
                 "shortcut": "F5",
             },
             {
                 "name": "user",
                 "display_name": cip_settings.user_name,
-                "description": _("Current user"),
+                "description": _("Current student"),
                 "handler": self.user_dialog,
                 "shortcut": "Ctrl+Shift+U",
             },
@@ -757,20 +753,10 @@ class CodeInPython(PyGameZeroMode):
             },
         ]
 
-    # def activate(self):
-    #     pass
-
-    def stop(self):
-        cip_settings.save_settings()
-
-    def workspace_dir(self):
-        self.initial_preparation()
-        cip_settings.register_panels_to_update(self)
-        # any move out CodeInPython mode, should logout user
-        cip_settings.user_name = ""
-
+    def activate(self):
+        # run when mode is activated
         self.tabs_remove()
-        self.workspace_update()
+        self.view.tabs.currentChanged.connect(self.change_tab_add_method)
 
         # check, if in default place is present update (zip file).
         if cip_settings.zip_check_content():
@@ -779,11 +765,45 @@ class CodeInPython(PyGameZeroMode):
             else:
                 os.remove(cip_settings.path_get("zip install default file"))
 
-        if self.view.current_tab and self.view.current_tab.path:
-            path = path_clean(self.view.current_tab.path)
+    def deactivate(self):
+        # run when mode is deactivated
+        cip_settings.user_name = ""
+        self._set_path_for_open_dialog(get_default_workspace())
+        try:
+            while True:  # loop just to make sure, maybe to remove
+                self.view.tabs.currentChanged.disconnect(
+                    self.change_tab_add_method
+                )
+        except Exception:
+            pass
+
+    def ensure_state(self):
+        # set stuff when all items are ready to use
+        self._set_path_for_open_dialog()
+        self.workspace_update()
+
+    def stop(self):
+        # run when Mu quit
+        pass
+
+    def workspace_dir(self):
+        return cip_settings.path_get("class")
+
+    def change_tab_add_method(self):
+        self._set_path_for_open_dialog()
+
+    def _set_path_for_open_dialog(self, path=""):
+        if not path:
+            if self.view.current_tab and self.view.current_tab.path:
+                path = path_clean(self.view.current_tab.path)
+            else:
+                path = cip_settings.path_get("class")
+
+        clean_path = path_clean(path)
+        if os.path.isdir(clean_path):
+            self.view.previous_folder = clean_path
         else:
-            path = cip_settings.path_get("workspace")
-        return path
+            self.view.previous_folder = os.path.dirname(clean_path)
 
     def api(self):
         """
@@ -801,7 +821,7 @@ class CodeInPython(PyGameZeroMode):
             play_slot = self.view.button_bar.slots["run"]
             play_slot.setIcon(load_icon("run"))
             play_slot.setText(_("Run"))
-            play_slot.setToolTip(_("Run your CodeInPython program."))
+            play_slot.setToolTip(_("Run your CodeInPython program"))
             self.set_buttons(modes=True)
         else:
             self.run_game()
@@ -809,7 +829,7 @@ class CodeInPython(PyGameZeroMode):
                 play_slot = self.view.button_bar.slots["run"]
                 play_slot.setIcon(load_icon("stop"))
                 play_slot.setText(_("Stop"))
-                play_slot.setToolTip(_("Stop your CodeInPython program."))
+                play_slot.setToolTip(_("Stop your CodeInPython program"))
                 self.set_buttons(modes=False)
 
     def run_game(self):
@@ -819,7 +839,7 @@ class CodeInPython(PyGameZeroMode):
         # Grab the Python file.
         tab = self.view.current_tab
         if tab is None:
-            logger.debug("There is no active text editor.")
+            logger.debug("There is no active text editor")
             self.stop_game()
             return
         if tab.path is None:
@@ -849,7 +869,7 @@ class CodeInPython(PyGameZeroMode):
         """
         Stop the currently running game.
         """
-        logger.debug("Stopping script.")
+        logger.debug("Stopping script")
         if self.runner:
             self.runner.stop_process()
             self.runner = None
@@ -918,7 +938,7 @@ class CodeInPython(PyGameZeroMode):
         self.ui_user = Ui_Dialog_Users()
         self.ui_user.setupUi(self.dialog_user)
 
-        cip_settings.subpath_class = cip_settings.get_setting("class_name")
+        cip_settings.subpath_class = cip_settings.config_file["class_name"]
 
         self.ui_user.user_edit.setText(cip_settings.user_name)
         self.ui_user.example_button.setEnabled(False)
@@ -1048,10 +1068,10 @@ class CodeInPython(PyGameZeroMode):
                     locked = True
 
             if start_file is None:
-                start_file = os.path.split(dir)[1] + ".py"
+                start_file = os.path.basename(dir) + ".py"
 
             # only file in root of project is allowed
-            start_file = os.path.split(start_file)[1]
+            start_file = os.path.basename(start_file)
             full_dir = os.path.join(dir, start_file)
 
             if locked or not os.path.exists(full_dir):
@@ -1246,27 +1266,24 @@ class CodeInPython(PyGameZeroMode):
             result, project_file = self.example_check_correctness(
                 current_lesson_item.directory
             )
-            if not result:
+            if result:
+                # self._set_path_for_open_dialog()
+                for tab in self.view.widgets:
+                    if tab.path is not None and tab.path == project_file:
+                        self.view.focus_tab(tab)
+                        break
+                else:  # if lesson isn't already open, then ...
+                    self.editor.direct_load(project_file)
+                self.dialog_user.close()
+            else:
                 QtWidgets.QMessageBox.warning(
                     None,
                     _("Info"),
                     _("Error during opening project"),
                     QtWidgets.QMessageBox.Ok,
                 )
-                self.workspace_update()
                 self.tabs_remove()
-                return
-            for tab in self.view.widgets:
-                if (
-                    tab.path is not None
-                    and tab.path == current_lesson_item.directory
-                ):
-                    self.view.focus_tab(tab)
-                    self.dialog_user.close()
-                    break
-            else:  # if lesson isn't already open, then ...
-                self.editor.direct_load(project_file)
-                self.dialog_user.close()
+            self.workspace_update()
 
     def tabs_remove(self, path_to_clean=""):
         """remove one tab or all tabs open by current user"""
@@ -1292,13 +1309,14 @@ class CodeInPython(PyGameZeroMode):
 
     def workspace_update(self):
         """refresh main window with all data correspond to CodeInPython"""
-        play_slot = self.view.button_bar.slots["user"]
-        play_slot.setText(cip_settings.user_name)
+        if "user" in self.view.button_bar.slots:
+            play_slot = self.view.button_bar.slots["user"]
+            play_slot.setText(cip_settings.user_name)
 
-        if cip_settings.user_name != "":
-            play_slot.setIcon(load_icon("user"))
-        else:
-            play_slot.setIcon(load_icon("user_missing"))
+            if cip_settings.user_name != "":
+                play_slot.setIcon(load_icon("user"))
+            else:
+                play_slot.setIcon(load_icon("user_missing"))
 
         # if exist, refresh also data in user panel
         if hasattr(self, "dialog_user"):
@@ -1311,7 +1329,6 @@ class CodeInPython(PyGameZeroMode):
                 self.ui_user.lessons_label.setText(
                     _("Please, enter your name above")
                 )
-
             self.lessons_fill_form()
             self.examples_fill_form()
             self.lessons_list_clicked()  # to update buttons status
@@ -1591,7 +1608,7 @@ class CodeInPython_Config_Tab(QtWidgets.QWidget):
             self.settings_class_click
         )
         self.ui_config_tab.update_server_button.clicked.connect(
-            self.update_server_button_click
+            self.update_internet_button_click
         )
         self.ui_config_tab.update_zip_button.clicked.connect(
             self.update_zip_button_click
@@ -1629,14 +1646,14 @@ class CodeInPython_Config_Tab(QtWidgets.QWidget):
                 )
             self.ui_config_tab.update_label.setText(desc)
 
-            name = cip_settings.get_setting("class_name")
+            name = cip_settings.config_file["class_name"]
             self.ui_config_tab.settings_class_edit.setText(name)
 
     def settings_save_data(self):
         # save data, clear user, refresh all panels
         if hasattr(self, "ui_config_tab"):
             student_class = self.ui_config_tab.settings_class_edit.text()
-            cip_settings.put_setting("class_name", student_class)
+            cip_settings.config_file["class_name"] = student_class
             cip_settings.user_name = ""
             cip_settings.update_all_panels_now()
 
@@ -1683,7 +1700,7 @@ class CodeInPython_Config_Tab(QtWidgets.QWidget):
                 None, _("Info"), label_text, QtWidgets.QMessageBox.Ok
             )
 
-    def update_server_button_click(self):
+    def update_internet_button_click(self):
         """Get update from www"""
         url_zip = urllib.parse.urljoin(
             cip_settings.URL_FOR_UPDATE_FILE, cip_settings.ZIP_FILENAME
@@ -1725,6 +1742,9 @@ class CodeInPython_Config_Tab(QtWidgets.QWidget):
             if cip_settings.show_comparision_of_zip_files(filename[0]):
                 cip_settings.update_data_from_zip(filename[0])
         self.update()
+
+
+cip_settings = CodeInPython_Settings()
 
 
 # if __name__ == "__main__":
