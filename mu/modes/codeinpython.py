@@ -200,6 +200,7 @@ class CodeInPython_Settings:
     ZIP_FILENAME = "codeinpython_update.zip"
     CONFIG_FILENAME = "codeinpython_config.xml"
     EXAMPLE_DESC_FILENAME = "description.xml"
+    MU_SETTINGS_FILENAME = "codeinpython"
     MARKER_FOR_I18N_IN_COMMENTS = "#$"
 
     SUBPATH_MU_CODE = get_default_workspace()
@@ -226,7 +227,7 @@ class CodeInPython_Settings:
         self.object_to_update = []
 
         self.config_file = self.Config_File(self)
-        self.config_file.filestem = "codeinpython"
+        self.config_file.filestem = self.MU_SETTINGS_FILENAME
         self.config_file.DEFAULTS = self.SETTINGS_FOR_FILE_DEFAULT
         self.config_file.autosave = True
         self.config_file.reset()
@@ -477,20 +478,20 @@ class CodeInPython_Settings:
             new_content = ""
             with open(args[1], encoding="utf-8", errors="replace") as file:
                 for line in file:
-                    line_to_rebuild = line.strip("\r\n")
-                    comment = self.comment_get_from_string(line_to_rebuild)
+                    line_rebuilded = line.strip("\r\n")
+                    comment = self.comment_get_from_string(line_rebuilded)
                     localized_comment = self.i18n_extract(
                         comment,
                         self.MARKER_FOR_I18N_IN_COMMENTS,
                         lang_to_use,
                     )
-                    line_to_rebuild = line_to_rebuild.replace(
+                    line_rebuilded = line_rebuilded.replace(
                         comment, localized_comment
                     )
-                    if not line_to_rebuild.strip(" \t") and comment:
+                    if not line_rebuilded.strip(" \t") and comment:
                         continue
-                    line_to_rebuild = line_to_rebuild + os.linesep
-                    new_content = new_content + line_to_rebuild
+                    line_rebuilded = line_rebuilded + os.linesep
+                    new_content = new_content + line_rebuilded
             with open(args[1], "bw") as file:
                 file.write(new_content.encode())
         return result
@@ -779,6 +780,7 @@ class CodeInPython(PyGameZeroMode):
 
     def ensure_state(self):
         # set stuff when all items are ready to use
+        cip_settings.language = self.editor.user_locale
         self._set_path_for_open_dialog()
         self.workspace_update()
 
@@ -879,8 +881,6 @@ class CodeInPython(PyGameZeroMode):
         path_for_codeinpython_add()
         path_for_codeinpython_add(cip_settings.path_get("main"))
         self.register_path_for_cip_env()
-
-        cip_settings.language = self.editor.user_locale
 
         # let's check if required folders are exists. If not, create it.
         for element in (
